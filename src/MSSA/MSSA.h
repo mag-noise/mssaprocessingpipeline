@@ -1,16 +1,17 @@
 #pragma once
-
-namespace Processing{
+#include <string>
+namespace Processor{
+    using namespace std;
     class MSSA{
         public:
             // Name: Process
             // Description: take input signal stream filter out noise from system
             // Input: multi-channel double array
             // Output:
-            void Process();
+            void static Process(string filePath);
         private:
-            const int input_size = 200;
-            const int window_size = 60;
+            const static int input_size = 200;
+            const static int window_size = 60;
         // Separated units of work for debugging purposes
         // TODO: fill out implemention step-wise
 

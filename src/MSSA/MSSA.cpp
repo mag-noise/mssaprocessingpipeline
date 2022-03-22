@@ -1,12 +1,18 @@
 #include "MSSA.h"
 #include <Eigen/Dense>
-using namespace std;
-
+#include <string>
+#include <iostream>
 namespace Processor{
-    class MSSA{
-        private:
-            const int input_size = 200;
-            const int window_size = 60;
+    using namespace std;
+    using Eigen::MatrixXd;
 
-    };
+    void MSSA::Process(string filePath) {
+        MatrixXd m(2, 2);
+        m(0, 0) = 3;
+        m(1, 0) = 2.5;
+        m(0, 1) = -1;
+        m(1, 1) = m(1, 0) + m(0, 1);
+        std::cout << m << std::endl;
+    }
+    
 }
