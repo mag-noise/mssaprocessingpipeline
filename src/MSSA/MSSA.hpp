@@ -5,8 +5,8 @@ namespace Processor{
     using namespace std;
     class MSSA{
         private:
-            const static int input_size = 200;
-            const static int window_size = 60;
+            const static int input_size = 100;
+            const static int window_size = 40;
             const static int k = input_size - window_size + 1;
             const static int number_of_signals = 2;
             typedef Eigen::Matrix<double, window_size, k> SignalMatrix;
@@ -19,9 +19,9 @@ namespace Processor{
         // Separated units of work for debugging purposes
         // TODO: fill out implemention step-wise
             TrajectoryMatrix static GenerateTrajectoryMatrix(array<double, input_size> &input_signal1, array<double, input_size> &input_signal2);
-            ProjectionMatrix static GenerateProjection(TrajectoryMatrix trajectory);
-            void SkewAverage();
-            void Reconstruct();
+            ReconstructionMatrix static GenerateProjection(TrajectoryMatrix trajectory);
+            SkewVector static SkewVectorAverage(ProjectionMatrix proj);
+            ReconstructionMatrix static ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig);
     public:
         // Name: Process
         // Description: take input signal stream filter out noise from system

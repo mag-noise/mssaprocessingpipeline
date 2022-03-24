@@ -7,7 +7,7 @@ namespace Processor{
     using namespace std;
     using Eigen::MatrixXd;
 
-    // NOTE: Stack size on Windows: 1 MB - on Linux: 8 MB
+    // NOTE: Stack size limit 128 KB
     void MSSA::Process(array<double, input_size> input_signal1, array<double, input_size> input_signal2) {
         assert(
             sizeof(input_signal1) / sizeof(input_signal1[0]) == input_size  
@@ -28,12 +28,31 @@ namespace Processor{
         return t;
     }
 
-    MSSA::ProjectionMatrix MSSA::GenerateProjection(TrajectoryMatrix trajectory)
+    MSSA::ReconstructionMatrix MSSA::GenerateProjection(TrajectoryMatrix trajectory)
     {
-        TrajCovarianceMatrix c = trajectory*(trajectory.transpose())/k;
-        Eigen::EigenSolver<TrajCovarianceMatrix> solver(c);
-        return solver.eigenvectors().transpose()*trajectory;
+        Eigen::SelfAdjointEigenSolver<TrajCovarianceMatrix> solver;
+        solver.compute(trajectory * (trajectory.transpose()) / k);
+        return ReconstructMatrix((solver.eigenvectors().transpose())*trajectory, solver.eigenvectors());
     }
+
+    MSSA::SkewVector MSSA::SkewVectorAverage(ProjectionMatrix proj)
+    {
+        SkewVector builder;
+
+        for (auto i = 0; i < window_size*2; i++) {
+            for (auto j = 0; j < k; j++) {
+                builder[i + j] += proj(i, j)/(i+j+1);
+            }
+        }
+        return builder;
+    }
+
+    MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
+    {
+
+        return ReconstructionMatrix();
+    }
+
     
     
 }
