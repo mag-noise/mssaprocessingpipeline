@@ -32,6 +32,8 @@ namespace Processor{
     {
         Eigen::SelfAdjointEigenSolver<TrajCovarianceMatrix> solver;
         solver.compute(trajectory * (trajectory.transpose()) / k);
+
+        // Sends the projection matrix along with the solver's eigenvectors
         return ReconstructMatrix((solver.eigenvectors().transpose())*trajectory, solver.eigenvectors());
     }
 
@@ -58,9 +60,10 @@ namespace Processor{
                 // Reconstruction matrix of 1 input = NxLM, thus matrix created to hold NxLM^2 elements to allow an NxLM matrix for each M.
                 // Skew vector takes a matrix LxK constructed from an L vector crossed with K vector, 
                 // then generates an N vector of averages from the LxK skew diagonals
-
-                // 40x1| 61x1
                 testVector = eig.col(m)(Eigen::seq(sig_m * window_size, (sig_m + 1) * window_size - 1));
+
+                // Note: .row().traspose() does not play well with * operator. Likely need to store. 
+                // Due to size, could be dynamically stored without massive computational speed loss
                 testVector2 = proj.row(m);
                 endVector = testVector*(testVector2.transpose());
                 rMatrix.col(m + window_size * number_of_signals * sig_m) =
