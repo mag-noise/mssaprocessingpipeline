@@ -42,6 +42,7 @@
 # Base ignore directories
 /build
 /build_lib
+/tests/build
 /.vs
 /.vscode
 /out
