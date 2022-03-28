@@ -7,7 +7,7 @@
 int main() {
     using namespace std;
     using Eigen::MatrixXd;
-    std::array<double, 100> input1{ 5.92675767,  5.33255382,  3.2079705 ,  2.34158143,  4.17617803,
+    std::array<float, 100> input1{ 5.92675767,  5.33255382,  3.2079705 ,  2.34158143,  4.17617803,
         3.43741286,  2.87449564,  2.21520318,  3.32622834,  3.42996689,
         5.20410601,  3.95102886,  0.79697378,  4.50524364,  4.01725594,
         3.30281604,  3.43981957,  3.3708352 ,  3.79366242,  3.66488521,
@@ -27,7 +27,7 @@ int main() {
         2.69618268,  0.96239641,  1.00089799,  1.60841647,  0.74308656,
         1.68989365,  1.87723848, -0.31600192,  1.5582401 ,  3.17549086,
         1.4432804 ,  2.52337001,  1.04247026,  0.74742949, 3.26119408 };
-    std::array<double, 100> input2{ 3.68980594, 3.81523477, 3.66258614, 4.31130612, 4.06347277,
+    std::array<float, 100> input2{ 3.68980594, 3.81523477, 3.66258614, 4.31130612, 4.06347277,
        3.05483698, 3.74107836, 3.20381289, 3.16074761, 5.0617104 ,
        2.70484884, 4.00043702, 3.48663288, 2.4720324 , 2.71601707,
        2.62654914, 4.42814516, 2.78874622, 4.00549015, 4.64455641,
@@ -47,8 +47,8 @@ int main() {
        1.95659147, 2.2523691 , 0.96245193, 2.57573091, 1.26880578,
        2.53701973, 2.22311208, 2.08306924, 0.79615746, 0.86959657,
        3.12809112, 2.26572798, 1.83149428, 1.62185506, 1.59993581 };
-    //for_each(input1.begin(), input1.end(), [](double& n) { n = (rand() % 5); });
-    //for_each(input2.begin(), input2.end(), [](double& n) { n = (rand() % 5); });
+    //for_each(input1.begin(), input1.end(), [](float& n) { n = (rand() % 5); });
+    //for_each(input2.begin(), input2.end(), [](float& n) { n = (rand() % 5); });
     
     
     string path = "log.csv";
@@ -58,6 +58,15 @@ int main() {
 
     // CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
     const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ");
-    ofs << Processor::MSSA::Process(input1, input2).format(CSVFormat);
+    using namespace Processor;
+    Eigen::MatrixXf reconstruction = MSSA::Process(input1, input2);
+    ofs << reconstruction.format(CSVFormat);
+
+    array<float, 100> recon_signal = MSSA::BuildSignal(reconstruction, { 0, 1, 2 });
+
+    cout << "[";
+    for_each(recon_signal.begin(), recon_signal.end(), [](float& n) {cout << n << ", "; });
+    cout << "]" << endl;
+
     return 0;
 }

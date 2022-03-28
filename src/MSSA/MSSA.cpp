@@ -3,12 +3,13 @@
 #include <Eigen/Eigenvalues>
 #include <string>
 #include <iostream>
+#include <forward_list>
 namespace Processor{
     using namespace std;
-    using Eigen::MatrixXd;
+    using Eigen::MatrixXf;
 
     // NOTE: Stack size limit 128 KB
-    MSSA::ReconstructionMatrix MSSA::Process(array<double, input_size> input_signal1, array<double, input_size> input_signal2) {
+    MSSA::ReconstructionMatrix MSSA::Process(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
         assert(
             sizeof(input_signal1) / sizeof(input_signal1[0]) == input_size  
             && sizeof(input_signal2) / sizeof(input_signal2[0]) == input_size
@@ -17,7 +18,7 @@ namespace Processor{
         
     }
 
-    MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(array<double, input_size> &input_signal1, array<double, input_size> &input_signal2) {
+    MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
         TrajectoryMatrix t;
         for (auto i = 0; i < window_size; i++) {
             for (auto j = 0; j < k; j++) {
@@ -31,15 +32,12 @@ namespace Processor{
     MSSA::ReconstructionMatrix MSSA::GenerateProjection(TrajectoryMatrix trajectory)
     {
         Eigen::EigenSolver<TrajCovarianceMatrix> solver;
-        TrajCovarianceMatrix c = trajectory * (trajectory.transpose()) / k;
-        solver.compute(c);
-        EigenVectorMatrix l = solver.pseudoEigenvectors();
-        ProjectionMatrix k = (l.transpose()) * trajectory;
+        solver.compute(trajectory * (trajectory.transpose()) / k);
         // Sends the projection matrix along with the solver's eigenvectors
-        return ReconstructMatrix(k, l);
+        return ReconstructMatrix((solver.pseudoEigenvectors().transpose()) * trajectory, solver.pseudoEigenvectors());
     }
 
-    MSSA::SkewVector MSSA::SkewVectorAverage(Eigen::Matrix<double, window_size, k> proj)
+    MSSA::SkewVector MSSA::SkewVectorAverage(Eigen::Matrix<float, window_size, k> proj)
     {
         SkewVector builder;
         builder.setZero();
@@ -53,12 +51,12 @@ namespace Processor{
         return builder;
     }
 
-    MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix &proj, EigenVectorMatrix &eig)
+    MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
     {
         ReconstructionMatrix rMatrix;
-        Eigen::Vector<double, window_size> testVector;
-        Eigen::Vector<double, k> testVector2;
-        Eigen::Matrix<double, window_size, k> endVector;
+        Eigen::Vector<float, window_size> testVector;
+        Eigen::Vector<float, k> testVector2;
+        Eigen::Matrix<float, window_size, k> endVector;
         for (auto m = 0; m < window_size * number_of_signals; m++) {
             for (auto sig_m = 0; sig_m < number_of_signals; sig_m++) {
                 // Reconstruction matrix of 1 input = NxLM, thus matrix created to hold NxLM^2 elements to allow an NxLM matrix for each M.
@@ -78,6 +76,19 @@ namespace Processor{
             
         }
         return rMatrix;
+    }
+
+    MSSA::CleanSignal MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarr_of_indices)
+    {
+        CleanSignal output_signal = {};
+
+        for (const auto& x : iarr_of_indices) {
+            for (auto val = 0; val < input_size; val++ ) {
+                output_signal[val] += mat.col(x)[val];
+            }
+        }
+
+        return output_signal;
     }
 
     
