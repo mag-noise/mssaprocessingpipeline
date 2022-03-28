@@ -42,7 +42,9 @@ namespace Processor{
     MSSA::SkewVector MSSA::SkewVectorAverage(Eigen::Matrix<double, window_size, k> proj)
     {
         SkewVector builder;
+        builder.setZero();
 
+        // TODO: Fix computation
         for (auto i = 0; i < window_size; i++) {
             for (auto j = 0; j < k; j++) {
                 builder[i + j] += proj(i, j)/(i+j+1);

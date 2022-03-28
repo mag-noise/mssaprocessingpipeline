@@ -60,6 +60,9 @@ namespace my {
             }
 
             TEST_F(ProcessorTest, SignalOutputSimilar) {
+                using namespace std;
+                using Eigen::MatrixXd;
+                using Processor::MSSA;
                 std::array<double, 100> input1{ 
                     5.92675767,  5.33255382,  3.2079705 ,  2.34158143,  4.17617803,
                     3.43741286,  2.87449564,  2.21520318,  3.32622834,  3.42996689,
@@ -125,7 +128,16 @@ namespace my {
                     1.9683189 , 1.30537071, 2.03233789, 1.18941501, 2.0469082 ,
                     1.11338809, 2.02897611, 1.0624902 , 1.93294865, 1.13997152,
                     1.77485349, 1.21914987, 1.62349759, 1.26106298, 1.54754539 };
+                
+                MatrixXd reconstruction = MSSA::Process(input1, input2);
+                MatrixXd signal1 =
+                    reconstruction.block(0, 0, MSSA::input_size, MSSA::window_size * MSSA::number_of_signals);
 
+                // TODO Extend to use first 3 rows
+
+                int base_sum = accumulate(input1.begin(), input1.end(), 0);
+                int recon_sum = accumulate(comparisonSignal_rows012.begin(), comparisonSignal_rows012.end(), 0);
+                EXPECT_EQ(base_sum, recon_sum);
             }
 
         }  // namespace
