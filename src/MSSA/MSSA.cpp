@@ -30,11 +30,13 @@ namespace Processor{
 
     MSSA::ReconstructionMatrix MSSA::GenerateProjection(TrajectoryMatrix trajectory)
     {
-        Eigen::SelfAdjointEigenSolver<TrajCovarianceMatrix> solver;
-        solver.compute(trajectory * (trajectory.transpose()) / k);
-
+        Eigen::EigenSolver<TrajCovarianceMatrix> solver;
+        TrajCovarianceMatrix c = trajectory * (trajectory.transpose()) / k;
+        solver.compute(c);
+        EigenVectorMatrix l = solver.pseudoEigenvectors();
+        ProjectionMatrix k = (l.transpose()) * trajectory;
         // Sends the projection matrix along with the solver's eigenvectors
-        return ReconstructMatrix((solver.eigenvectors().transpose())*trajectory, solver.eigenvectors());
+        return ReconstructMatrix(k, l);
     }
 
     MSSA::SkewVector MSSA::SkewVectorAverage(Eigen::Matrix<double, window_size, k> proj)
@@ -49,18 +51,18 @@ namespace Processor{
         return builder;
     }
 
-    MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
+    MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix &proj, EigenVectorMatrix &eig)
     {
         ReconstructionMatrix rMatrix;
-        Eigen::VectorXd testVector;
-        Eigen::VectorXd testVector2;
-        Eigen::MatrixXd endVector;
+        Eigen::Vector<double, window_size> testVector;
+        Eigen::Vector<double, k> testVector2;
+        Eigen::Matrix<double, window_size, k> endVector;
         for (auto m = 0; m < window_size * number_of_signals; m++) {
             for (auto sig_m = 0; sig_m < number_of_signals; sig_m++) {
                 // Reconstruction matrix of 1 input = NxLM, thus matrix created to hold NxLM^2 elements to allow an NxLM matrix for each M.
                 // Skew vector takes a matrix LxK constructed from an L vector crossed with K vector, 
                 // then generates an N vector of averages from the LxK skew diagonals
-                testVector = eig.col(m)(Eigen::seq(sig_m * window_size, (sig_m + 1) * window_size - 1));
+                testVector = (eig.col(m)(Eigen::seq(sig_m * window_size, (sig_m + 1) * window_size - 1)));
 
                 // Note: .row().traspose() does not play well with * operator. Likely need to store. 
                 // Due to size, could be dynamically stored without massive computational speed loss

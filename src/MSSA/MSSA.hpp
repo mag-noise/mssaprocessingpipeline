@@ -23,7 +23,7 @@ namespace Processor{
             TrajectoryMatrix static GenerateTrajectoryMatrix(array<double, input_size> &input_signal1, array<double, input_size> &input_signal2);
             ReconstructionMatrix static GenerateProjection(TrajectoryMatrix trajectory);
             SkewVector static SkewVectorAverage(Eigen::Matrix<double, window_size, k> proj);
-            ReconstructionMatrix static ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig);
+            ReconstructionMatrix static ReconstructMatrix(ProjectionMatrix &proj, EigenVectorMatrix &eig);
         public:
             // Name: Process
             // Description: take input signal stream filter out noise from system
