@@ -1,9 +1,11 @@
 #include "../src/MSSA/MSSA.hpp"
+#include "../src/PreProcessing/PProcessor.hpp"
 
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
 #include <cmath>
 #include <numeric>
+#include <string>
 
 namespace my {
     namespace project {
@@ -11,6 +13,26 @@ namespace my {
 
             // The fixture for testing class Foo.
             class ProcessorTest : public ::testing::Test {};
+
+            class PreProcessorTest : public ::testing::Test {
+                
+            public: 
+                std::string test_csv;
+            protected:
+
+                // You can remove any or all of the following functions if their bodies would
+                // be empty.
+
+                PreProcessorTest() {
+                    // You can do set-up work for each test here.
+                    test_csv = "../data/signal1.csv"
+                }
+
+                ~PreProcessorTest() override {
+                    // You can do clean-up work that doesn't throw exceptions here.
+                }
+
+            };
 
             // Tests that Foo does Xyz.
             TEST_F(ProcessorTest, RecreatesOriginalRandom) {
@@ -164,6 +186,13 @@ namespace my {
                 int recon_sum = accumulate(recon_signal.begin(), recon_signal.end(), 0.0);
                 int base_sum = accumulate(comparisonSignal_rows012.begin(), comparisonSignal_rows012.end(), 0.0);
                 EXPECT_EQ(base_sum, recon_sum);
+            }
+
+            TEST_F(PreProcessorTest, CorrectlyReadsCSVFile) {
+                using PreProcessing::PreProcessor;
+                
+                // TODO: create test to add input_size to some array/vector and have all values be valid floating point values
+                PreProcessor::CreateValidSegment()
             }
 
         }  // namespace
