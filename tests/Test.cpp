@@ -10,35 +10,7 @@ namespace my {
         namespace {
 
             // The fixture for testing class Foo.
-            class ProcessorTest : public ::testing::Test {
-            protected:
-                // You can remove any or all of the following functions if their bodies would
-                // be empty.
-
-                ProcessorTest() {
-                    // You can do set-up work for each test here.
-                }
-
-                ~ProcessorTest() override {
-                    // You can do clean-up work that doesn't throw exceptions here.
-                }
-
-                // If the constructor and destructor are not enough for setting up
-                // and cleaning up each test, you can define the following methods:
-
-                void SetUp() override {
-                    // Code here will be called immediately after the constructor (right
-                    // before each test).
-                }
-
-                void TearDown() override {
-                    // Code here will be called immediately after each test (right
-                    // before the destructor).
-                }
-
-                // Class members declared here can be used by all tests in the test suite
-                // for Foo.
-            };
+            class ProcessorTest : public ::testing::Test {};
 
             // Tests that Foo does Xyz.
             TEST_F(ProcessorTest, RecreatesOriginalRandom) {
@@ -111,7 +83,7 @@ namespace my {
                 MatrixXf signal1 =
                     reconstruction.block(0, 0, MSSA::input_size, MSSA::window_size * MSSA::number_of_signals);
 
-                int base_sum = accumulate(input1.begin(), input1.end(), 0);
+                int base_sum = accumulate(input1.begin(), input1.end(), 0.0);
                 int recon_sum = nearbyint(signal1.sum());
                 EXPECT_EQ(base_sum, recon_sum);
             }
@@ -189,8 +161,8 @@ namespace my {
                 // TODO Extend to use first 3 rows
                 array<float, 100> recon_signal = MSSA::BuildSignal(reconstruction, {0, 1, 2});
 
-                int recon_sum = accumulate(recon_signal.begin(), recon_signal.end(), 0);
-                int base_sum = accumulate(comparisonSignal_rows012.begin(), comparisonSignal_rows012.end(), 0);
+                int recon_sum = accumulate(recon_signal.begin(), recon_signal.end(), 0.0);
+                int base_sum = accumulate(comparisonSignal_rows012.begin(), comparisonSignal_rows012.end(), 0.0);
                 EXPECT_EQ(base_sum, recon_sum);
             }
 

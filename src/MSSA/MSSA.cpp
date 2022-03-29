@@ -3,6 +3,7 @@
 #include <Eigen/Eigenvalues>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <forward_list>
 namespace Processor{
     using namespace std;
@@ -26,6 +27,7 @@ namespace Processor{
                 t(i+window_size, j) = input_signal2[i + j];
             }
         }
+
         return t;
     }
 
@@ -34,15 +36,22 @@ namespace Processor{
         Eigen::EigenSolver<TrajCovarianceMatrix> solver;
         solver.compute(trajectory * (trajectory.transpose()) / k);
         // Sends the projection matrix along with the solver's eigenvectors
-        return ReconstructMatrix((solver.pseudoEigenvectors().transpose()) * trajectory, solver.pseudoEigenvectors());
+
+        string path = "eigenvector.csv";
+        ofstream ofs(path);
+
+        // CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
+        using namespace Eigen;
+        IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+        ofs << (solver.eigenvectors().real()).format(OctaveFmt);
+
+        return ReconstructMatrix((solver.eigenvectors().real().transpose()) * trajectory, solver.eigenvectors().real());
     }
 
     MSSA::SkewVector MSSA::SkewVectorAverage(Eigen::Matrix<float, window_size, k> proj)
     {
         SkewVector builder;
         builder.setZero();
-
-        // TODO: Fix computation
         for (auto i = 0; i < window_size; i++) {
             for (auto j = 0; j < k; j++) {
                 builder[i + j] += proj(i, j)/(i+j+1);
@@ -53,25 +62,25 @@ namespace Processor{
 
     MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
     {
+
+
+
         ReconstructionMatrix rMatrix;
-        Eigen::Vector<float, window_size> testVector;
-        Eigen::Vector<float, k> testVector2;
+        Eigen::Vector<float, window_size> selectedEigVector;
+        Eigen::Vector<float, k> projectionRowVector;
         Eigen::Matrix<float, window_size, k> endVector;
         for (auto m = 0; m < window_size * number_of_signals; m++) {
             for (auto sig_m = 0; sig_m < number_of_signals; sig_m++) {
                 // Reconstruction matrix of 1 input = NxLM, thus matrix created to hold NxLM^2 elements to allow an NxLM matrix for each M.
                 // Skew vector takes a matrix LxK constructed from an L vector crossed with K vector, 
                 // then generates an N vector of averages from the LxK skew diagonals
-                testVector = (eig.col(m)(Eigen::seq(sig_m * window_size, (sig_m + 1) * window_size - 1)));
+                selectedEigVector = (eig.col(m)(Eigen::seq(sig_m * window_size, (sig_m + 1) * window_size - 1)));
 
                 // Note: .row().traspose() does not play well with * operator. Likely need to store. 
-                // Due to size, could be dynamically stored without massive computational speed loss
-                testVector2 = proj.row(m);
-                endVector = testVector*(testVector2.transpose());
-                rMatrix.col(m + window_size * number_of_signals * sig_m) =
-                    SkewVectorAverage(endVector);
-                /*rMatrix.col(m + window_size*number_of_signals*sig_m) = 
-                    SkewVectorAverage(eig.col(m)(Eigen::seq(sig_m*window_size, (sig_m+1)*window_size - 1))*(proj.row(m).transpose()));*/
+                // Due to size, could be dynamically stored without massive computational speed loss. Worth exploring if needed
+                projectionRowVector = proj.row(m);
+                endVector = selectedEigVector *(projectionRowVector.transpose());
+                rMatrix.col(m + window_size * number_of_signals * sig_m) = SkewVectorAverage(endVector);
             }
             
         }
