@@ -13,18 +13,15 @@ namespace CentralProcessingUnit{
 
 	public:
 		// TODO: update to cleanly check that only container types are used
-		void static CreateValidSegment(string& input_file, A& output_container);
-		void static SegmentInput(A& input_container);
+		void static LoadCSVData(string& input_file, A& output_container);
 	};
 
-
-
-	template<class InputType, class Container>
-	void MSSAProcessingUnit<InputType, Container>::CreateValidSegment(string& input_file, Container& output_container)
+	template<typename T, typename A>
+	inline void MSSAProcessingUnit<T, A>::LoadCSVData(string& input_file, A& output_container)
 	{
 		ifstream file{ input_file };
 		string line;
-		InputType val;
+		T val;
 		if (file.is_open()) {
 			while (getline(file, line)) {
 				std::stringstream line_stream(line);
@@ -34,12 +31,7 @@ namespace CentralProcessingUnit{
 				}
 			}
 		}
-
 	}
 
-	template<class InputType, class Container>
-	void MSSAProcessingUnit<InputType, Container>::SegmentInput(Container& input_container) {
-		
-	}
 
 }

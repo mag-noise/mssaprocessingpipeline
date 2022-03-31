@@ -8,7 +8,7 @@ if(test)
 	list(REMOVE_ITEM file_search ${PROJECT_PARENT}/src/main.cpp)
 
 	enable_testing()
-	add_executable(${PROJECT_NAME} ${file_search} ${PROJECT_SOURCE_DIR}/Test.cpp ${PROJECT_SOURCE_DIR}/TestPreProcessor.cpp ${PROJECT_SOURCE_DIR}/TestProcessor.cpp)
+	add_executable(${PROJECT_NAME} ${file_search} ${PROJECT_SOURCE_DIR}/Test.cpp ${PROJECT_SOURCE_DIR}/TestCpu.cpp ${PROJECT_SOURCE_DIR}/TestProcessor.cpp)
 
 	find_package(GTest REQUIRED)
 	find_package(Eigen3 REQUIRED NO_MODULE)
