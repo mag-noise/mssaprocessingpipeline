@@ -17,16 +17,12 @@ namespace Testing {
                 std::string test_csv;
             protected:
 
-                // You can remove any or all of the following functions if their bodies would
-                // be empty.
-
                 CpuTest() {
-                    // You can do set-up work for each test here.
+                    // TODO: change to relative reference
                     test_csv = "C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\signal1.csv";
                 }
 
                 ~CpuTest() override {
-                    // You can do clean-up work that doesn't throw exceptions here.
                 }
 
             };

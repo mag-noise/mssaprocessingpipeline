@@ -6,6 +6,7 @@ namespace Processor{
     using namespace std;
     class MSSA{
         public:
+            // TODO: Potentially move out values to definition utility file for central point of reference
             const static int input_size = 100;
             const static int window_size = 40;
             const static int k = input_size - window_size + 1;
