@@ -1,5 +1,5 @@
 #include "../src/MSSA/MSSA.hpp"
-#include "../src/PreProcessing/PProcessor.hpp"
+#include "../src/CPU/CPU.hpp"
 
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
@@ -33,16 +33,19 @@ namespace Testing {
 
 
             TEST_F(PreProcessorTest, CorrectlyReadsCSVFile) {
-                using PreProcessing::MSSAPreProcessor;
+                using CentralProcessingUnit::MSSAProcessingUnit;
                 using Processor::MSSA;
                 using namespace std;
                 // TODO: create test to add input_size to some array/vector and have all values be valid floating point values
                 vector<float> test_arr = {};
-                MSSAPreProcessor<float>::CreateValidSegment(test_csv, test_arr);
-                
+                MSSAProcessingUnit<float>::CreateValidSegment(test_csv, test_arr);
+                MSSAProcessingUnit<float>::SegmentInput(test_arr);
                 EXPECT_FLOAT_EQ(test_arr[0], 4);
             }
 
+            TEST_F(PreProcessorTest, CreateSegments) {
+
+            }
         }  // namespace
     }  // namespace project
 }  // namespace my

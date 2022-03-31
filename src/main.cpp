@@ -1,5 +1,5 @@
 #include "MSSA/MSSA.hpp"
-#include "PreProcessing/PProcessor.hpp"
+#include "CPU/CPU.hpp"
 #include <Eigen/Dense>
 #include <iostream>
 #include <fstream>
@@ -53,32 +53,23 @@ int main() {
     //for_each(input2.begin(), input2.end(), [](float& n) { n = (rand() % 5); });
     
     
-    //string path = "log.csv";
-    //ofstream ofs(path);
-    //if (!ofs)
-    //    return -1;
+    string path = "log.csv";
+    ofstream ofs(path);
+    if (!ofs)
+        return -1;
 
-    //// CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
-    //const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ");
-    //using namespace Processor;
-    //Eigen::MatrixXf reconstruction = MSSA::Process(input1, input2);
-    //ofs << reconstruction.format(CSVFormat);
+    // CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
+    const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ");
+    using namespace Processor;
+    Eigen::MatrixXf reconstruction = MSSA::Process(input1, input2);
+    ofs << reconstruction.format(CSVFormat);
 
-    //array<float, 100> recon_signal = MSSA::BuildSignal(reconstruction, { 0, 1, 2 });
+    array<float, 100> recon_signal = MSSA::BuildSignal(reconstruction, { 0, 1, 2 });
 
-    //cout << "[";
-    //for_each(recon_signal.begin(), recon_signal.end(), [](float& n) {cout << n << ", "; });
-    //cout << "]" << endl;
+    cout << "[";
+    for_each(recon_signal.begin(), recon_signal.end(), [](float& n) {cout << n << ", "; });
+    cout << "]" << endl;
 
-
-    using PreProcessing::MSSAPreProcessor;
-    using Processor::MSSA;
-    using namespace std;
-    string test_csv = "C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\signal1.csv";
-
-    // TODO: create test to add input_size to some array/vector and have all values be valid floating point values
-    vector<float> test_arr = {};
-    MSSAPreProcessor<float>::CreateValidSegment(test_csv, test_arr);
 
     return 0;
 }

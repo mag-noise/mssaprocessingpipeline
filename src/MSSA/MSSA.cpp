@@ -9,16 +9,6 @@ namespace Processor{
     using namespace std;
     using Eigen::MatrixXf;
 
-    // NOTE: Stack size limit 128 KB
-    MSSA::ReconstructionMatrix MSSA::Process(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
-        assert(
-            sizeof(input_signal1) / sizeof(input_signal1[0]) == input_size  
-            && sizeof(input_signal2) / sizeof(input_signal2[0]) == input_size
-        );
-        return GenerateProjection(GenerateTrajectoryMatrix(input_signal1, input_signal2));
-        
-    }
-
     MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
         TrajectoryMatrix t;
         for (auto i = 0; i < window_size; i++) {
@@ -62,9 +52,6 @@ namespace Processor{
 
     MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
     {
-
-
-
         ReconstructionMatrix rMatrix;
         Eigen::Vector<float, window_size> selectedEigVector;
         Eigen::Vector<float, k> projectionRowVector;
@@ -85,6 +72,15 @@ namespace Processor{
             
         }
         return rMatrix;
+    }
+
+    // NOTE: Stack size limit 128 KB
+    MSSA::ReconstructionMatrix MSSA::Process(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
+        assert(
+            sizeof(input_signal1) / sizeof(input_signal1[0]) == input_size  
+            && sizeof(input_signal2) / sizeof(input_signal2[0]) == input_size
+        );
+        return GenerateProjection(GenerateTrajectoryMatrix(input_signal1, input_signal2));
     }
 
     MSSA::CleanSignal MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarr_of_indices)

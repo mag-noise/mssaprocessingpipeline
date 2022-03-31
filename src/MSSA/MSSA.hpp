@@ -10,9 +10,8 @@ namespace Processor{
             const static int window_size = 40;
             const static int k = input_size - window_size + 1;
             const static int number_of_signals = 2;
-
-        private:
             typedef std::array<float, input_size> CleanSignal;
+        private:
             typedef Eigen::Vector<float, window_size + k - 1> SkewVector;
             typedef Eigen::Matrix<float, window_size, k> SignalMatrix;
             typedef Eigen::Matrix<float, window_size* number_of_signals, k> TrajectoryMatrix;
@@ -29,7 +28,6 @@ namespace Processor{
             ReconstructionMatrix static ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig);
 
         public:
-
             // Name: Process
             // Description: take input signal stream filter out noise from system
             // Input: multi-channel double array
