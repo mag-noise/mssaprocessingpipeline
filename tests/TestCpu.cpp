@@ -39,8 +39,9 @@ namespace Testing {
             }
 
             TEST_F(CpuTest, OutputFormattedSignal) {
-
+                using namespace CentralProcessingUnit;
+                MSSAProcessingUnit<float> mssaCpu = MSSAProcessingUnit<float>();
             }
         }  // namespace
-    }  // namespace project
-}  // namespace my
+    }  // namespace CpuTesting
+}  // namespace Testing
