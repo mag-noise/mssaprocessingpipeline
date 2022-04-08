@@ -2,6 +2,7 @@
 #include <string>
 #include <forward_list>
 #include <Eigen/Dense>
+#include <vector>
 namespace Processor{
     using namespace std;
     using Eigen::Dynamic;

@@ -5,7 +5,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "Utilities/MatrixDefinitions.hpp"
 
 int main() {
     using namespace std;
