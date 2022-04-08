@@ -17,7 +17,7 @@ namespace CentralProcessingUnit{
 		std::vector<int> SegmentIndices(A& container);
 	public:
 		// TODO: update to cleanly check that only container types are used
-		MSSAProcessingUnit() { _segmented_signal_container = new vector<A>; }
+		MSSAProcessingUnit() { _segmented_signal_container = std::vector<A>(); }
 
 		void static LoadCSVData(string& input_file, A& output_container);
 		void PreProcess(A data_to_load);

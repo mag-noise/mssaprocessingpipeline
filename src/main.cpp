@@ -5,10 +5,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "Utilities/MatrixDefinitions.hpp"
 
 int main() {
     using namespace std;
     using Eigen::MatrixXd;
+
     std::array<float, 100> input1{ 5.92675767,  5.33255382,  3.2079705 ,  2.34158143,  4.17617803,
         3.43741286,  2.87449564,  2.21520318,  3.32622834,  3.42996689,
         5.20410601,  3.95102886,  0.79697378,  4.50524364,  4.01725594,
