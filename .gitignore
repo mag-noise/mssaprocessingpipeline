@@ -47,4 +47,5 @@
 /.vscode
 /out
 /tools/vcpkg
-/data/MGF
+/data
+

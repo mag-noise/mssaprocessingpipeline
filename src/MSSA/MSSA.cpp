@@ -7,14 +7,18 @@
 #include <forward_list>
 namespace Processor{
     using namespace std;
-    using Eigen::MatrixXf;
+    using Eigen::MatrixXd;
 
-    MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
+    // PRIVATE FUNCTIONS
+
+#pragma region MSSA_PRIVATE_REGION
+
+    MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(ValidSignal &inboard_signal, ValidSignal &outboard_signal) {
         TrajectoryMatrix t;
         for (auto i = 0; i < window_size; i++) {
             for (auto j = 0; j < k; j++) {
-                t(i, j) = input_signal1[i + j];
-                t(i+window_size, j) = input_signal2[i + j];
+                t(i, j) = inboard_signal[i + j];
+                t(i+window_size, j) = outboard_signal[i + j];
             }
         }
 
@@ -38,7 +42,7 @@ namespace Processor{
         return ReconstructMatrix((solver.eigenvectors().real().transpose()) * trajectory, solver.eigenvectors().real());
     }
 
-    MSSA::SkewVector MSSA::SkewVectorAverage(Eigen::Matrix<float, window_size, k> proj)
+    MSSA::SkewVector MSSA::SkewVectorAverage(SignalMatrix proj)
     {
         SkewVector builder;
         builder.setZero();
@@ -53,9 +57,12 @@ namespace Processor{
     MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
     {
         ReconstructionMatrix rMatrix;
-        Eigen::Vector<float, window_size> selectedEigVector;
-        Eigen::Vector<float, k> projectionRowVector;
-        Eigen::Matrix<float, window_size, k> endVector;
+        /*Eigen::Vector<double, window_size> selectedEigVector;
+        Eigen::Vector<double, k> projectionRowVector;
+        Eigen::Matrix<double, window_size, k> endVector;*/
+        Eigen::MatrixXd selectedEigVector;
+        Eigen::MatrixXd projectionRowVector;
+        Eigen::MatrixXd endVector;
         for (auto m = 0; m < window_size * number_of_signals; m++) {
             for (auto sig_m = 0; sig_m < number_of_signals; sig_m++) {
                 // Reconstruction matrix of 1 input = NxLM, thus matrix created to hold NxLM^2 elements to allow an NxLM matrix for each M.
@@ -74,18 +81,34 @@ namespace Processor{
         return rMatrix;
     }
 
-    // NOTE: Stack size limit 128 KB
-    MSSA::ReconstructionMatrix MSSA::Process(array<float, input_size> &input_signal1, array<float, input_size> &input_signal2) {
-        assert(
-            sizeof(input_signal1) / sizeof(input_signal1[0]) == input_size  
-            && sizeof(input_signal2) / sizeof(input_signal2[0]) == input_size
-        );
-        return GenerateProjection(GenerateTrajectoryMatrix(input_signal1, input_signal2));
+    MSSA::CovMatrix MSSA::GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB) {
+        MatrixXd mat = MatrixXd();
+        MatrixXd centered = mat.rowwise() - mat.colwise().mean();
+        MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows() - 1);
+        return cov;
     }
 
-    MSSA::CleanSignal MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarr_of_indices)
+
+#pragma endregion
+
+
+#pragma region MSSA_PUBLIC_REGION
+
+
+    // PUBLIC FUNCTIONS
+
+    // NOTE: Stack size limit 128 KB
+    MSSA::ReconstructionMatrix MSSA::Process(ValidSignal&inboard_signal, ValidSignal &outboard_signal) {
+        assert(
+            sizeof(inboard_signal) / sizeof(inboard_signal[0]) == input_size  
+            && sizeof(outboard_signal) / sizeof(outboard_signal[0]) == input_size
+        );
+        return GenerateProjection(GenerateTrajectoryMatrix(inboard_signal, outboard_signal));
+    }
+
+    MSSA::ValidSignal MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarr_of_indices)
     {
-        CleanSignal output_signal = {};
+        ValidSignal output_signal = {};
 
         for (const auto& x : iarr_of_indices) {
             for (auto val = 0; val < input_size; val++ ) {
@@ -97,5 +120,6 @@ namespace Processor{
     }
 
     
+#pragma endregion MSSA_PUBLIC_REGION
     
 }

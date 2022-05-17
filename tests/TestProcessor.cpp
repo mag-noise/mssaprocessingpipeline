@@ -1,5 +1,4 @@
 #include "../src/MSSA/MSSA.hpp"
-
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
 #include <cmath>
@@ -17,14 +16,14 @@ namespace Testing {
             TEST_F(ProcessorTest, RecreatesOriginalRandom) {
                 // Exercises the Xyz feature of Foo.
                 using namespace std;
-                using Eigen::MatrixXf;
+                using Eigen::MatrixXd;
                 using Processor::MSSA;
-                std::array<float, 100> input1;
-                std::array<float, 100> input2;
-                for_each(input1.begin(), input1.end(), [](float& n) { n = (rand() % 5); });
-                for_each(input2.begin(), input2.end(), [](float& n) { n = (rand() % 5); });
-                MatrixXf reconstruction = MSSA::Process(input1, input2);
-                MatrixXf signal1 =
+                MSSA::ValidSignal input1;
+                MSSA::ValidSignal input2;
+                for_each(input1.begin(), input1.end(), [](double& n) { n = (rand() % 5); });
+                for_each(input2.begin(), input2.end(), [](double& n) { n = (rand() % 5); });
+                MatrixXd reconstruction = MSSA::Process(input1, input2);
+                MatrixXd signal1 =
                     reconstruction.block(0, 0, MSSA::input_size, MSSA::window_size * MSSA::number_of_signals);
 
                 int base_sum = accumulate(input1.begin(), input1.end(), 0);
@@ -35,9 +34,9 @@ namespace Testing {
             TEST_F(ProcessorTest, RecreatesOriginal) {
                 // Exercises the Xyz feature of Foo.
                 using namespace std;
-                using Eigen::MatrixXf;
+                using Eigen::MatrixXd;
                 using Processor::MSSA;
-                std::array<float, 100> input1{
+                MSSA::ValidSignal input1{
                     5.92675767,  5.33255382,  3.2079705 ,  2.34158143,  4.17617803,
                     3.43741286,  2.87449564,  2.21520318,  3.32622834,  3.42996689,
                     5.20410601,  3.95102886,  0.79697378,  4.50524364,  4.01725594,
@@ -58,7 +57,7 @@ namespace Testing {
                     2.69618268,  0.96239641,  1.00089799,  1.60841647,  0.74308656,
                     1.68989365,  1.87723848, -0.31600192,  1.5582401 ,  3.17549086,
                     1.4432804 ,  2.52337001,  1.04247026,  0.74742949, 3.26119408 };
-                std::array<float, 100> input2{
+                MSSA::ValidSignal input2{
                     3.68980594, 3.81523477, 3.66258614, 4.31130612, 4.06347277,
                     3.05483698, 3.74107836, 3.20381289, 3.16074761, 5.0617104 ,
                     2.70484884, 4.00043702, 3.48663288, 2.4720324 , 2.71601707,
@@ -80,8 +79,8 @@ namespace Testing {
                     2.53701973, 2.22311208, 2.08306924, 0.79615746, 0.86959657,
                     3.12809112, 2.26572798, 1.83149428, 1.62185506, 1.59993581 };
 
-                MatrixXf reconstruction = MSSA::Process(input1, input2);
-                MatrixXf signal1 =
+                MatrixXd reconstruction = MSSA::Process(input1, input2);
+                MatrixXd signal1 =
                     reconstruction.block(0, 0, MSSA::input_size, MSSA::window_size * MSSA::number_of_signals);
 
                 int base_sum = accumulate(input1.begin(), input1.end(), 0.0);
@@ -91,9 +90,9 @@ namespace Testing {
 
             TEST_F(ProcessorTest, SignalOutputSimilar) {
                 using namespace std;
-                using Eigen::MatrixXf;
+                using Eigen::MatrixXd;
                 using Processor::MSSA;
-                std::array<float, 100> input1{
+                MSSA::ValidSignal input1{
                     5.92675767,  5.33255382,  3.2079705 ,  2.34158143,  4.17617803,
                     3.43741286,  2.87449564,  2.21520318,  3.32622834,  3.42996689,
                     5.20410601,  3.95102886,  0.79697378,  4.50524364,  4.01725594,
@@ -114,7 +113,7 @@ namespace Testing {
                     2.69618268,  0.96239641,  1.00089799,  1.60841647,  0.74308656,
                     1.68989365,  1.87723848, -0.31600192,  1.5582401 ,  3.17549086,
                     1.4432804 ,  2.52337001,  1.04247026,  0.74742949, 3.26119408 };
-                std::array<float, 100> input2{
+                MSSA::ValidSignal input2{
                     3.68980594, 3.81523477, 3.66258614, 4.31130612, 4.06347277,
                     3.05483698, 3.74107836, 3.20381289, 3.16074761, 5.0617104 ,
                     2.70484884, 4.00043702, 3.48663288, 2.4720324 , 2.71601707,
@@ -135,7 +134,7 @@ namespace Testing {
                     1.95659147, 2.2523691 , 0.96245193, 2.57573091, 1.26880578,
                     2.53701973, 2.22311208, 2.08306924, 0.79615746, 0.86959657,
                     3.12809112, 2.26572798, 1.83149428, 1.62185506, 1.59993581 };
-                std::array<float, 100> comparisonSignal_rows012{
+                MSSA::ValidSignal comparisonSignal_rows012{
                     4.40828   , 3.87612862, 4.34906618, 3.71505304, 4.24935576,
                     3.7696739 , 4.10442873, 3.83066064, 3.97413289, 3.90793778,
                     3.82976011, 3.99497981, 3.641109  , 4.05109039, 3.51856038,
@@ -157,10 +156,10 @@ namespace Testing {
                     1.11338809, 2.02897611, 1.0624902 , 1.93294865, 1.13997152,
                     1.77485349, 1.21914987, 1.62349759, 1.26106298, 1.54754539 };
 
-                MatrixXf reconstruction = MSSA::Process(input1, input2);
+                MatrixXd reconstruction = MSSA::Process(input1, input2);
 
                 // TODO Extend to use first 3 rows
-                array<float, 100> recon_signal = MSSA::BuildSignal(reconstruction, { 0, 1, 2 });
+                MSSA::ValidSignal recon_signal = MSSA::BuildSignal(reconstruction, { 0, 1, 2 });
 
                 int recon_sum = accumulate(recon_signal.begin(), recon_signal.end(), 0.0);
                 int base_sum = accumulate(comparisonSignal_rows012.begin(), comparisonSignal_rows012.end(), 0.0);
