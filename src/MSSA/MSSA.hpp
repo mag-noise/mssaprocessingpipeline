@@ -9,7 +9,6 @@ namespace Processor{
     class MSSA{
         private:
             const static bool is_dynamic = true;
-
         public:
             // TODO: Potentially move out values to definition utility file for central point of reference
             // --> Could also move class to be templated out, with typedefs defined outside and imported in.
@@ -20,6 +19,9 @@ namespace Processor{
             const static int k = input_size - window_size + 1;
             const static int number_of_signals = 2;
             typedef std::conditional< is_dynamic, std::vector<double>, std::array<double, input_size>>::type ValidSignal;
+            typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, window_size* number_of_signals*number_of_signals>>::type ReconstructionMatrix;
+            typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, input_size>>::type CovMatrix;
+            CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
         private:
             // TODO: Double: march 11, 2016 | 
             typedef std::conditional< is_dynamic, Eigen::Vector<double, Dynamic>, Eigen::Vector<double, window_size + k - 1>>::type SkewVector;
@@ -28,15 +30,12 @@ namespace Processor{
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, window_size* number_of_signals>>::type TrajCovarianceMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, window_size* number_of_signals>>::type EigenVectorMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, k>>::type ProjectionMatrix;
-            typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, window_size* number_of_signals*number_of_signals>>::type ReconstructionMatrix;
-            typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, input_size>>::type CovMatrix;
             // Separated units of work for debugging purposes
             // TODO: fill out implemention step-wise
             TrajectoryMatrix static GenerateTrajectoryMatrix(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
             ReconstructionMatrix static GenerateProjection(TrajectoryMatrix trajectory);
             SkewVector static SkewVectorAverage(SignalMatrix proj);
             ReconstructionMatrix static ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig);
-            CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
 
         public:
             // Name: Process

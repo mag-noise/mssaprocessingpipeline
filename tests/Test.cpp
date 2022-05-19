@@ -1,5 +1,5 @@
 #include "../src/MSSA/MSSA.hpp"
-#include "../src/CPU/CPU.hpp"
+#include "../src/SPU/SPU.hpp"
 
 #include "gtest/gtest.h"
 
