@@ -21,7 +21,6 @@ namespace Processor{
             typedef std::conditional< is_dynamic, std::vector<double>, std::array<double, input_size>>::type ValidSignal;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, window_size* number_of_signals*number_of_signals>>::type ReconstructionMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, input_size>>::type CovMatrix;
-            CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
         private:
             // TODO: Double: march 11, 2016 | 
             typedef std::conditional< is_dynamic, Eigen::Vector<double, Dynamic>, Eigen::Vector<double, window_size + k - 1>>::type SkewVector;
@@ -42,8 +41,11 @@ namespace Processor{
             // Description: take input signal stream filter out noise from system
             // Input: multi-channel double array
             // Output:
+            CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
             ReconstructionMatrix static Process(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
             ValidSignal static BuildSignal(ReconstructionMatrix mat, forward_list<int> iarr_of_indices);
+            vector<int> static ObtainSignificantComponents(ValidSignal vectorA, ValidSignal vectorB);
+
 
     };
 }

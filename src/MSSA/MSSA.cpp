@@ -117,6 +117,21 @@ namespace Processor{
         return GenerateProjection(GenerateTrajectoryMatrix(inboard_signal, outboard_signal));
     }
 
+    vector<int> MSSA::ObtainSignificantComponents(ValidSignal vectorA, ValidSignal vectorB) {
+        MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data())
+                                - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
+        MatrixXd Fab = GenerateCovarianceMatrix(vectorA, vectorB) * (GenerateCovarianceMatrix(vectorA, vectorA) * GenerateCovarianceMatrix(vectorB, vectorB)).cwiseSqrt().inverse();
+        assert(Fab.rows() == 2 && Fab.cols() == 2);
+        vector<double> box{ Fab.transpose().diagonal(0).block<1,2>(0,0)[0], Fab.transpose().diagonal(0).block<1,2>(0,0)[1] };
+        return vector<int>();
+    }
+
+    /// <summary>
+    /// Function to put the reconstruction matrix back into a single signal
+    /// </summary>
+    /// <param name="mat"></param>
+    /// <param name="iarr_of_indices"></param>
+    /// <returns></returns>
     MSSA::ValidSignal MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarr_of_indices)
     {
         ValidSignal output_signal = {};
