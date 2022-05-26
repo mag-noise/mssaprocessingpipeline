@@ -13,25 +13,25 @@ namespace Testing {
     namespace SpuTesting {
         namespace {
 
-            class DISABLED_SpuTest : public ::testing::Test {
+            class SpuTest : public ::testing::Test {
             public:
                 std::string test_csv;
                 std::u16string test_matfile;
             protected:
 
-                DISABLED_SpuTest() {
+                SpuTest() {
                     // TODO: change to relative reference
                     test_csv = "C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\signal1.csv";
                     test_matfile = u"C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\2016\\03\\11\\MGF\\MGF_20160311_064011_065832_v2.1.0.lv2";
                 }
 
-                ~DISABLED_SpuTest() override {
+                ~SpuTest() override {
                 }
 
             };
 
 
-            TEST_F(DISABLED_SpuTest, CorrectlyReadsCSVFile) {
+            TEST_F(SpuTest, CorrectlyReadsCSVFile) {
                 using SignalProcessingUnit::MSSAProcessingUnit;
                 using Processor::MSSA;
                 using namespace std;
@@ -42,7 +42,7 @@ namespace Testing {
                 EXPECT_DOUBLE_EQ(test_arr[0], 4);
             }
 
-            TEST_F(DISABLED_SpuTest, ReadMatfile) {
+            TEST_F(SpuTest, ReadMatfile) {
                 using namespace std;
                 using namespace SignalProcessingUnit;
                 MSSAProcessingUnit<double, vector<double>> unit{};
@@ -51,12 +51,12 @@ namespace Testing {
 
             }
 
-            TEST_F(DISABLED_SpuTest, OutputFormattedSignal) {
+            TEST_F(SpuTest, OutputFormattedSignal) {
                 using namespace SignalProcessingUnit;
                 MSSAProcessingUnit<double> mssaCpu = MSSAProcessingUnit<double>();
             }
 
-            TEST_F(DISABLED_SpuTest, MatFileProcessing) {
+            TEST_F(SpuTest, MatFileProcessing) {
                 using namespace std;
                 using namespace SignalProcessingUnit;
                 MSSAProcessingUnit<double, vector<double>> in_unit{};
@@ -68,7 +68,6 @@ namespace Testing {
                 MSSAProcessingUnit<double, vector<double>>::Process(in_unit, out_unit);
 
             }
-
 
         }  // namespace
     }  // namespace CpuTesting

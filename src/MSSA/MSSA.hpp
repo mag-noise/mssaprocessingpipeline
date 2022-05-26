@@ -43,8 +43,9 @@ namespace Processor{
             // Output:
             CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
             ReconstructionMatrix static Process(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
-            ValidSignal static BuildSignal(ReconstructionMatrix mat, forward_list<int> iarr_of_indices);
-            vector<int> static ObtainSignificantComponents(ValidSignal vectorA, ValidSignal vectorB);
+            double static CorrelationCoefficient(Eigen::Matrix<double, 1, MSSA::input_size> x, Eigen::Matrix<double, 1, MSSA::input_size> y);
+            std::forward_list<int> static ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard);
+            void static BuildSignal(ReconstructionMatrix mat, forward_list<int> iarrOfIndices, ValidSignal& inboardRec, ValidSignal& outboarRec);
 
 
     };

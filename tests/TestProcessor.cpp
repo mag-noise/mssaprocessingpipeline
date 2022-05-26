@@ -60,18 +60,6 @@ namespace Testing {
                 EXPECT_EQ(compMat.isApprox(cov.block<5, 5>(0, 0)), true);
             }
 
-            TEST_F(ProcessorTest, TestSignificantComponents) {
-                // Exercises the Xyz feature of Foo.
-                using namespace std;
-                using Eigen::MatrixXd;
-
-                vector<double> vecA = { 4, 12, 67, 23, 45 };
-                vector<double> vecB = { 2, 8, 16, 20, 2 };
-
-                auto cov = Processor::MSSA::ObtainSignificantComponents(vecA, vecB);
-
-                EXPECT_EQ(false, true);
-            }
         }  // namespace
     }  // namespace project
 }  // namespace my

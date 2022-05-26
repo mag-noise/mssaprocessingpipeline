@@ -42,7 +42,7 @@ namespace SignalProcessingUnit{
 		void LoadCSVData(string& input_file, A& output_container);
 		int LoadFromMatlab(std::u16string input_file, bool is_inboard);
 		void PreProcess(A data_to_load, bool xyz = false);
-		void static Process(MSSAProcessingUnit inboard, MSSAProcessingUnit outboard, int num_of_threads = 1);
+		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, int num_of_threads = 1);
 		std::vector<A> operator[](char);
 		std::size_t size();
 	};
@@ -193,7 +193,7 @@ namespace SignalProcessingUnit{
 	/// <param name="inboard"></param>
 	/// <param name="outboard"></param>
 	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> inboard, MSSAProcessingUnit<T,A> outboard, int num_of_threads = 1) {
+	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, int num_of_threads = 1) {
 		using Processor::MSSA;
 		using Eigen::Dense;
 		
@@ -202,10 +202,27 @@ namespace SignalProcessingUnit{
 				MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
 				// TODO: Reconstruct original vectors
 #ifdef _DEBUG
+				MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
+#endif
+				MSSA::BuildSignal(mat, MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx]), inboard[vec][idx], outboard[vec][idx]);
+#ifdef _DEBUG
+				MSSA::ValidSignal inboardRecon = inboard[vec][idx];
+				MSSA::ValidSignal outboardRecon = outboard[vec][idx];
+
 				std::cout << "Mat " << idx << " size: " << mat.size() << std::endl;
 				std::cout << "N rows: " << mat.rows() << std::endl;
 				std::cout << "Row 1: " << mat.row(0) << std::endl;
 				std::cout << "N cols: " << mat.cols() << std::endl;
+
+
+
+				std::cout << "Original Signal: ";
+				for_each(inboardOriginal.begin(), inboardOriginal.end(), [](double a) {std::cout << a << ", "; });
+				std::cout << std::endl;
+
+				std::cout << "Reconstructed Signal: ";
+				for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
+				std::cout << std::endl;
 				break;
 #endif // _DEBUG
 			}

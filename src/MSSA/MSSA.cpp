@@ -6,6 +6,7 @@
 #include <fstream>
 #include <forward_list>
 #include <iterator>
+
 namespace Processor{
     using namespace std;
     using Eigen::MatrixXd;
@@ -31,7 +32,7 @@ namespace Processor{
         Eigen::EigenSolver<TrajCovarianceMatrix> solver;
         solver.compute(trajectory * (trajectory.transpose()) / k);
         // Sends the projection matrix along with the solver's eigenvectors
-
+#ifdef _DEBUG
         string path = "eigenvector.csv";
         ofstream ofs(path);
 
@@ -39,19 +40,26 @@ namespace Processor{
         using namespace Eigen;
         IOFormat OctaveFmt(StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
         ofs << (solver.eigenvectors().real()).format(OctaveFmt);
-
+        ofs.close();
+#endif
         return ReconstructMatrix((solver.eigenvectors().real().transpose()) * trajectory, solver.eigenvectors().real());
     }
 
     MSSA::SkewVector MSSA::SkewVectorAverage(SignalMatrix proj)
     {
         SkewVector builder=SkewVector(window_size + k - 1);
+        SkewVector counter=SkewVector(window_size + k - 1);
+
         builder.setZero();
+        counter.setZero();
         for (auto i = 0; i < window_size; i++) {
             for (auto j = 0; j < k; j++) {
-                builder[i + j] += proj(i, j)/(i+j+1);
+                builder[i + j] += proj(i, j);
+                counter[i + j] += 1;
             }
         }
+        for (auto i = 0; i < window_size + k - 1; i++)
+            builder[i] = builder[i] / counter[i];
         return builder;
     }
 
@@ -76,28 +84,23 @@ namespace Processor{
                 projectionRowVector = proj.row(m);
                 endVector = selectedEigVector *(projectionRowVector);
                 rMatrix.col(m + window_size * number_of_signals * sig_m) = SkewVectorAverage(endVector);
+#ifdef _DEBUG
+                if(m==0){
+                    cout << "selectedEigenVector: " << selectedEigVector << endl;
+                    cout << "projectionRowVector: " << projectionRowVector << endl;
+                    cout << "endVector: " << endVector << endl;
+                    cout << "rMatrix: " << rMatrix.col(m + window_size * number_of_signals * sig_m) << endl;
+                }
+#endif
+
+
             }
             
         }
         return rMatrix;
     }
 
-    // TODO: Create Covariance Matrix for 2 vectors
-    MSSA::CovMatrix MSSA::GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB) {
-        using Eigen::VectorXd;
-        MatrixXd vecA = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data());
-        MatrixXd vecB = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
-        MatrixXd mat = MatrixXd(2, MSSA::input_size);
-        mat.row(0) = vecA;
-        mat.row(1) = vecB;
 
-        
-        //mat.row(0) = vectorA.data();
-        //mat.row(1) = vectorB.data();
-        MatrixXd centered = mat.rowwise() - mat.colwise().mean();
-        MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows());
-        return cov;
-    }
 
 
 #pragma endregion
@@ -117,13 +120,54 @@ namespace Processor{
         return GenerateProjection(GenerateTrajectoryMatrix(inboard_signal, outboard_signal));
     }
 
-    vector<int> MSSA::ObtainSignificantComponents(ValidSignal vectorA, ValidSignal vectorB) {
-        MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data())
-                                - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
-        MatrixXd Fab = GenerateCovarianceMatrix(vectorA, vectorB) * (GenerateCovarianceMatrix(vectorA, vectorA) * GenerateCovarianceMatrix(vectorB, vectorB)).cwiseSqrt().inverse();
-        assert(Fab.rows() == 2 && Fab.cols() == 2);
-        vector<double> box{ Fab.transpose().diagonal(0).block<1,2>(0,0)[0], Fab.transpose().diagonal(0).block<1,2>(0,0)[1] };
-        return vector<int>();
+    // TODO: Create Covariance Matrix for 2 vectors
+    MSSA::CovMatrix MSSA::GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB) {
+        using Eigen::VectorXd;
+        MatrixXd vecA = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data());
+        MatrixXd vecB = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
+        MatrixXd mat = MatrixXd(2, MSSA::input_size);
+        mat.row(0) = vecA;
+        mat.row(1) = vecB;
+
+
+        //mat.row(0) = vectorA.data();
+        //mat.row(1) = vectorB.data();
+        MatrixXd centered = mat.rowwise() - mat.colwise().mean();
+        MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows());
+        return cov;
+    }
+
+    double MSSA::CorrelationCoefficient(Eigen::Matrix<double, 1, MSSA::input_size > x, Eigen::Matrix<double, 1, MSSA::input_size> y) {
+        /*MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data())
+                                - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());*/
+
+        double x_m = x.mean();
+        double y_m = y.mean();
+        x.array() -= x_m;
+        y.array() -= y_m;
+
+        return (x.array() * y.array()).sum() / (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum()));
+    }
+
+    /// <summary>
+    /// Gets a list of indices that are required for reconstruction
+    /// </summary>
+    /// <param name="recon"></param>
+    /// <param name="inboard"></param>
+    /// <param name="outboard"></param>
+    /// <returns></returns>
+    std::forward_list<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard) {
+        MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(inboard.data())
+                                - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(outboard.data());
+
+        double alpha = 0.05;
+        std::forward_list<int> indexList = std::forward_list<int>();
+        for (int i = 0; i < recon.cols(); i++) {
+            if (CorrelationCoefficient(recon.col(i), interference) > alpha) {
+                indexList.push_front(i);
+            }
+        }
+        return indexList;
     }
 
     /// <summary>
@@ -132,17 +176,19 @@ namespace Processor{
     /// <param name="mat"></param>
     /// <param name="iarr_of_indices"></param>
     /// <returns></returns>
-    MSSA::ValidSignal MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarr_of_indices)
+    void MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, ValidSignal& inboardRec, ValidSignal& outboarRec)
     {
-        ValidSignal output_signal = {};
-
-        for (const auto& x : iarr_of_indices) {
-            for (auto val = 0; val < input_size; val++ ) {
-                output_signal[val] += mat.col(x)[val];
+        for (const auto& x : iarrOfIndices) {
+            for (auto val = 0; val < input_size; val++) {
+                if (x < window_size * number_of_signals) {
+                    inboardRec[val] += mat.col(x)[val];
+                }
+                else {
+                    outboarRec[val] += mat.col(x)[val];
+                }
             }
         }
 
-        return output_signal;
     }
 
     
