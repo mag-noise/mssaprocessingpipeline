@@ -8,11 +8,10 @@
 #include <algorithm> // for copy
 #include <iterator> // For back_inserter
 #include "../MSSA/MSSA.hpp"
+#ifdef _MAT_
 #include "MatlabEngine.hpp"
 #include "MatlabDataArray.hpp"
-
-#define _DEBUG
-
+#endif // !_MAT_
 
 // TODO: Add functionality for parallelism
 namespace SignalProcessingUnit{
@@ -23,6 +22,7 @@ namespace SignalProcessingUnit{
 	private:
 		
 		bool is_xyz = true;
+		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
 		std::vector<int> SegmentIndices(A& container, std::function<int(int)> indexer);
 
@@ -30,19 +30,26 @@ namespace SignalProcessingUnit{
 	public:
 		std::map<char, std::function<int(int)>> idx;
 		// TODO: update to cleanly check that only container types are used
-		MSSAProcessingUnit() { 
+		MSSAProcessingUnit(bool board) { 
 			_segmented_signal_container = map<char, std::vector<A>>();
 			idx = map<char, std::function<int(int)>>();
 			idx['x'] = [](int a) {return a * 3; };
 			idx['y'] = [](int a) {return a * 3 + 1; };
 			idx['z'] = [](int a) {return a * 3 + 2; };
 			idx['a'] = [](int a) {return a; };
+			is_inboard = board;
 		}
 
+#ifdef _MAT_
+		int LoadFromMatlab(std::u16string input_file);
+		int SaveToMatlab();
+#endif // !_MAT_
+
 		void LoadCSVData(string& input_file, A& output_container);
-		int LoadFromMatlab(std::u16string input_file, bool is_inboard);
 		void PreProcess(A data_to_load, bool xyz = false);
 		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, int num_of_threads = 1);
+		A Join();
+		A Join(char);
 		std::vector<A> operator[](char);
 		std::size_t size();
 	};
@@ -88,6 +95,7 @@ namespace SignalProcessingUnit{
 		is_xyz = false;
 	}
 
+#ifdef _MAT_
 	/// <summary>
 	/// Static function to load Matfile data into some container type
 	/// </summary>
@@ -96,7 +104,7 @@ namespace SignalProcessingUnit{
 	/// <param name="input_file">File Path for CSV data</param>
 	/// <param name="output_container">Container for data</param>
 	template<typename T, typename A>
-	inline int MSSAProcessingUnit<T, A>::LoadFromMatlab(std::u16string file, bool is_inboard)
+	inline int MSSAProcessingUnit<T, A>::LoadFromMatlab(std::u16string file)
 	{
 		using namespace matlab::engine;
 
@@ -117,13 +125,12 @@ namespace SignalProcessingUnit{
 
 		
 		matlab::data::TypedArray<double> result1 = matlabPtr->getVariable(board);
-#ifdef _DEBUG
+
 		// Display results
 		std::cout << "Board dimensions: " << result1.getDimensions()[0] << ", " << result1.getDimensions()[1] << std::endl;
 
 		std::cout << "Board type: " << typeid(&result1[0][0]).name() << std::endl;
 		std::cout << "Board first element: " << result1[0][0] << std::endl;
-#endif // _DEBUG
 
 		A dest(result1.begin(), result1.end());
 		//std::copy(dest.begin() + (dest.size() / 3 * axes[axis]), (dest.end() * (axes[axis] + 1) / 3), inboard_container);
@@ -136,7 +143,33 @@ namespace SignalProcessingUnit{
 		return 1;
 	}
 
+	template<typename T, typename A>
+	inline int MSSAProcessingUnit<T, A>::SaveToMatlab() {
+		using namespace matlab::engine;
 
+		// Start MATLAB engine synchronously
+		std::unique_ptr<MATLABEngine> matlabPtr = startMATLAB();
+
+
+		//Create MATLAB data array factory
+		matlab::data::ArrayFactory factory;
+
+		// Create variables    
+		matlab::data::TypedArray<double> data = factory.createArray<double>(_segmented_signal_container['x'], _segmented_signal_container['y'], _segmented_signal_container['z']);
+
+
+		// Get the result from MATLAB
+		if (is_inboard)
+			board = u"B_Inboard";
+		else
+			board = u"B_Outboard";
+
+		// Put variables in the MATLAB workspace
+		matlabPtr->setVariable(board, std::move(data));
+
+		return 1;
+	}
+#endif // !_MAT_
 
 	/// <summary>
 	/// Pre-Processing step. Validates and segments data into correct format for matrix operations
@@ -229,6 +262,30 @@ namespace SignalProcessingUnit{
 		}
 	}
 
+	template<typename T, typename A>
+	inline A MSSAProcessingUnit<T, A>::Join() {
+		A output;
+		// Interesting solution to efficient concatenation of vectors:
+		// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
+		output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
+		auto lam = [&output](A segment) {
+			output.insert(output.end(), segment.begin(), segment.end());
+		};
+		for (auto idx = 'x'; idx <= 'z'; idx++) {
+			std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
+		}
+		return output;
+	}
+
+	template<typename T, typename A>
+	inline A MSSAProcessingUnit<T, A>::Join(char idx) {
+		A output;
+		output.reserve(_segmented_signal_container[idx].size() * Processor::MSSA::input_size);
+		std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), [&output](A segment) {
+			output.insert(output.end(), segment.begin(), segment.end());
+			});
+		return output;
+	}
 	
 
 

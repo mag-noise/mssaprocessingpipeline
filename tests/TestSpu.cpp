@@ -37,7 +37,7 @@ namespace Testing {
                 using namespace std;
                 // TODO: create test to add input_size to some array/vector and have all values be valid double precision values
                 vector<double> test_arr = {};
-                MSSAProcessingUnit<double> unit{};
+                MSSAProcessingUnit<double> unit = MSSAProcessingUnit<double>(true);
                 unit.LoadCSVData(test_csv, test_arr);
                 EXPECT_DOUBLE_EQ(test_arr[0], 4);
             }
@@ -45,25 +45,25 @@ namespace Testing {
             TEST_F(SpuTest, ReadMatfile) {
                 using namespace std;
                 using namespace SignalProcessingUnit;
-                MSSAProcessingUnit<double, vector<double>> unit{};
-                unit.LoadFromMatlab(test_matfile, true);
+                MSSAProcessingUnit<double, vector<double>> unit = MSSAProcessingUnit<double>(true);
+                unit.LoadFromMatlab(test_matfile);
                 EXPECT_NE(unit['x'][0][0], 0.0);
 
             }
 
             TEST_F(SpuTest, OutputFormattedSignal) {
                 using namespace SignalProcessingUnit;
-                MSSAProcessingUnit<double> mssaCpu = MSSAProcessingUnit<double>();
+                MSSAProcessingUnit<double> mssaCpu = MSSAProcessingUnit<double>(true);
             }
 
             TEST_F(SpuTest, MatFileProcessing) {
                 using namespace std;
                 using namespace SignalProcessingUnit;
-                MSSAProcessingUnit<double, vector<double>> in_unit{};
-                MSSAProcessingUnit<double, vector<double>> out_unit{};
+                MSSAProcessingUnit<double, vector<double>> in_unit = MSSAProcessingUnit<double, vector<double>>(true);
+                MSSAProcessingUnit<double, vector<double>> out_unit = MSSAProcessingUnit<double, vector<double>>(false);
 
-                in_unit.LoadFromMatlab(test_matfile, true);
-                out_unit.LoadFromMatlab(test_matfile, false);
+                in_unit.LoadFromMatlab(test_matfile);
+                out_unit.LoadFromMatlab(test_matfile);
 
                 MSSAProcessingUnit<double, vector<double>>::Process(in_unit, out_unit);
 
