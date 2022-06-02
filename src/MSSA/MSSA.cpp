@@ -84,7 +84,7 @@ namespace Processor{
                 projectionRowVector = proj.row(m);
                 endVector = selectedEigVector *(projectionRowVector);
                 rMatrix.col(m + window_size * number_of_signals * sig_m) = SkewVectorAverage(endVector);
-#ifdef _DEBUG
+#ifdef _DEBUG___
                 if(m==0){
                     cout << "selectedEigenVector: " << selectedEigVector << endl;
                     cout << "projectionRowVector: " << projectionRowVector << endl;
@@ -163,9 +163,14 @@ namespace Processor{
         double alpha = 0.05;
         std::forward_list<int> indexList = std::forward_list<int>();
         for (int i = 0; i < recon.cols(); i++) {
+#ifndef _DEBUG
             if (CorrelationCoefficient(recon.col(i), interference) > alpha) {
                 indexList.push_front(i);
             }
+#endif // !_DEBUG
+#ifdef _DEBUG
+            indexList.push_front(i);
+#endif
         }
         return indexList;
     }

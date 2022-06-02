@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm> // for copy
 #include <iterator> // For back_inserter
+#include <valarray>
 #include "../MSSA/MSSA.hpp"
 #ifdef _MAT_
 #include "MatlabEngine.hpp"
@@ -65,7 +66,7 @@ namespace SignalProcessingUnit{
 		int container_size = std::size(container);
 		int num_of_segments = container_size / Processor::MSSA::input_size / (indexer(1)/3*2+1);
 		for (auto i = 0; i < num_of_segments; i++)
-			indices.push_back(indexer(i) * Processor::MSSA::input_size);
+			indices.push_back((indexer(1) / 3 * 2 + 1) * i * Processor::MSSA::input_size);
 		return indices;
 	}
 
@@ -192,14 +193,18 @@ namespace SignalProcessingUnit{
 				});
 		}
 		else {
+			std::vector<int> indices = SegmentIndices(data_to_load, idx['x']);
 			for (char val = 'x'; val <= 'z'; val++) {
-				std::vector<int> indices = SegmentIndices(data_to_load, idx[val]);
 				this->_segmented_signal_container[val] = std::vector<A>();
 				std::for_each(indices.begin(), indices.end(), [this,val, data_to_load](int i) {
 					std::vector<T> copy_to = {};
-					std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::input_size, back_inserter(copy_to));
+					//std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::input_size, back_inserter(copy_to));
+					for (auto j = 0; j < Processor::MSSA::input_size; j++) {
+						copy_to.push_back(data_to_load[i + idx[val](j)]);
+					}
 					_segmented_signal_container[val].push_back(copy_to);
 					});
+
 			
 			}
 		}
@@ -264,15 +269,23 @@ namespace SignalProcessingUnit{
 
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::Join() {
-		A output;
+		A output = A();
 		// Interesting solution to efficient concatenation of vectors:
 		// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
-		output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
+		/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
 		auto lam = [&output](A segment) {
 			output.insert(output.end(), segment.begin(), segment.end());
 		};
 		for (auto idx = 'x'; idx <= 'z'; idx++) {
 			std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
+		}*/
+
+		for (auto i = 0; i < _segmented_signal_container['x'].size(); i++) {
+			for (auto j = 0; j < _segmented_signal_container['x'][0].size(); j++) {
+				for (auto idx = 'x'; idx <= 'z'; idx++) {
+					output.push_back(_segmented_signal_container[idx][i][j]);
+				}
+			}
 		}
 		return output;
 	}

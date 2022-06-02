@@ -60,12 +60,22 @@ namespace Testing {
                 using namespace std;
                 using namespace SignalProcessingUnit;
                 MSSAProcessingUnit<double, vector<double>> in_unit = MSSAProcessingUnit<double, vector<double>>(true);
+                MSSAProcessingUnit<double, vector<double>> in_unit_copy = MSSAProcessingUnit<double, vector<double>>(true);
+
                 MSSAProcessingUnit<double, vector<double>> out_unit = MSSAProcessingUnit<double, vector<double>>(false);
 
                 in_unit.LoadFromMatlab(test_matfile);
+                in_unit_copy.LoadFromMatlab(test_matfile);
                 out_unit.LoadFromMatlab(test_matfile);
 
                 MSSAProcessingUnit<double, vector<double>>::Process(in_unit, out_unit);
+
+                auto changed = in_unit.Join();
+                auto original = in_unit_copy.Join();
+
+                for (auto i = 0; i < in_unit.size(); i++) {
+                    EXPECT_DOUBLE_EQ(original[i], changed[i]);
+                }
 
             }
 

@@ -49,3 +49,6 @@
 /tools/vcpkg
 /data
 
+# Matfiles to ignore
+*.mexw64
+*.asv

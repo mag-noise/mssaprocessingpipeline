@@ -11,6 +11,9 @@
 using namespace matlab::data;
 
 class MexFunction : public matlab::mex::Function {
+private:
+	//std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr;
+
 public:
 	void operator() (matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
 		using SignalProcessingUnit::MSSAProcessingUnit;
@@ -18,6 +21,12 @@ public:
 		MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
 		MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
 		matlab::data::TypedArray<double> in = std::move(inputs[0]);
+
+		//std::ostringstream stream;
+		//stream << "Inboard 0: " << double(in[0]) << std::endl;
+		//stream << "test" << std::endl;
+
+		//displayOnMATLAB(stream);
 		std::vector<double> dest(in.begin(), in.end());
 		inboard.PreProcess(dest, true);
 
@@ -36,10 +45,23 @@ public:
 	}
 
 	void checkArguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
-		std::shared_ptr<matlab::engine::MATLABEngine> matPtr = getEngine();
+		std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr;
+		matlabPtr = getEngine();
 		matlab::data::ArrayFactory factory;
 		// Error message template:
 		if(inputs[0].getType() != ArrayType::DOUBLE && inputs[1].getType() != ArrayType::DOUBLE)
-			matPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Input should be inboard and outboard.") }));
+			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Input should be inboard and outboard.") }));
+
+		
+	}
+	void displayOnMATLAB(std::ostringstream& stream) {
+		// Pass stream content to MATLAB fprintf function
+		std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr;
+		matlabPtr = getEngine();
+		matlab::data::ArrayFactory factory;
+		matlabPtr->feval(u"fprintf", 0,
+			std::vector<Array>({ factory.createScalar(stream.str()) }));
+		// Clear stream buffer
+		stream.str("");
 	}
 };
