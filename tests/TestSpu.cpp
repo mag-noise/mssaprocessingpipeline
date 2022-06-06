@@ -22,7 +22,7 @@ namespace Testing {
                 SpuTest() {
                     // TODO: change to relative reference
                     test_csv = "C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\signal1.csv";
-                    test_matfile = u"C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\2016\\03\\11\\MGF\\MGF_20160311_064011_065832_v2.1.0.lv2";
+                    test_matfile = u"C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\2016\\03\\11\\MGF\\MGF_20160311_234614_235232_v2.1.0.lv2";
                 }
 
                 ~SpuTest() override {
@@ -74,7 +74,8 @@ namespace Testing {
                 auto original = in_unit_copy.Join();
 
                 for (auto i = 0; i < in_unit.size(); i++) {
-                    EXPECT_DOUBLE_EQ(original[i], changed[i]);
+                    EXPECT_NEAR(original[i], changed[i], 0.1);
+
                 }
 
             }

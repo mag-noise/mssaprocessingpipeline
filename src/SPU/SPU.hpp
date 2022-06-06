@@ -5,7 +5,7 @@
 #include <sstream>
 #include <map>
 #include <vector>
-#include <algorithm> // for copy
+#include <algorithm> // for copy, fill
 #include <iterator> // For back_inserter
 #include <valarray>
 #include "../MSSA/MSSA.hpp"
@@ -48,6 +48,8 @@ namespace SignalProcessingUnit{
 
 		void LoadCSVData(string& input_file, A& output_container);
 		void PreProcess(A data_to_load, bool xyz = false);
+		void SetSegmentedValues(char index, double seg_index, T value);
+		void BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, char mapping, int index);
 		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, int num_of_threads = 1);
 		A Join();
 		A Join(char);
@@ -209,6 +211,12 @@ namespace SignalProcessingUnit{
 			}
 		}
 	}
+	
+	template<typename T, typename A>
+	inline void SetSegmentedValues(char index, double seg_index, T value) {
+		_segmented_signal_container[index][seg_index] = value;
+	}
+
 
 	template<typename T, typename A>
 	inline std::vector<A> MSSAProcessingUnit<T, A>::operator[](char index)
@@ -216,10 +224,33 @@ namespace SignalProcessingUnit{
 		return _segmented_signal_container[index];
 	}
 
+
 	template<typename T, typename A>
 	inline std::size_t MSSAProcessingUnit<T,A>::size() 
 	{
 		return std::size(_segmented_signal_container.begin()->second);
+	}
+
+	/// <summary>
+	/// Function to put the reconstruction matrix back into a single signal
+	/// </summary>
+	/// <param name="mat"></param>
+	/// <param name="iarr_of_indices"></param>
+	/// <returns></returns>
+	template<typename T, typename A>
+	inline void MSSAProcessingUnit<T, A>::BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, char mapping, int index)
+	{
+		using Processor::MSSA;
+		std::fill(_segmented_signal_container[mapping][index].begin(), _segmented_signal_container[mapping][index].end(), 0);
+		for (const auto& x : iarrOfIndices) {
+			for (auto val = 0; val < MSSA::input_size; val++) {
+				if ((x < MSSA::window_size * MSSA::number_of_signals && is_inboard) || (x >= MSSA::window_size * MSSA::number_of_signals && !is_inboard)) {
+					_segmented_signal_container[mapping][index][val] += mat.col(x)[val];
+				}
+			}
+		}
+		
+
 	}
 
 	/// <summary>
@@ -242,7 +273,9 @@ namespace SignalProcessingUnit{
 #ifdef _DEBUG
 				MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
 #endif
-				MSSA::BuildSignal(mat, MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx]), inboard[vec][idx], outboard[vec][idx]);
+				auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx]);
+				inboard.BuildSignal(mat, componentList, vec, idx);
+				outboard.BuildSignal(mat, componentList, vec, idx);
 #ifdef _DEBUG
 				MSSA::ValidSignal inboardRecon = inboard[vec][idx];
 				MSSA::ValidSignal outboardRecon = outboard[vec][idx];

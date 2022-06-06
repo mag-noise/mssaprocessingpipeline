@@ -60,6 +60,7 @@ namespace Processor{
         }
         for (auto i = 0; i < window_size + k - 1; i++)
             builder[i] = builder[i] / counter[i];
+            //builder[i] = 0;
         return builder;
     }
 
@@ -145,8 +146,10 @@ namespace Processor{
         double y_m = y.mean();
         x.array() -= x_m;
         y.array() -= y_m;
-
-        return (x.array() * y.array()).sum() / (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum()));
+        double val2 = (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum())); 
+        if (std::isnan(val2))
+            return 0;
+        return (x.array() * y.array()).sum() / val2;
     }
 
     /// <summary>
@@ -160,11 +163,13 @@ namespace Processor{
         MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(inboard.data())
                                 - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(outboard.data());
 
-        double alpha = 0.05;
+        
+        double alpha = 0.005;
         std::forward_list<int> indexList = std::forward_list<int>();
         for (int i = 0; i < recon.cols(); i++) {
 #ifndef _DEBUG
-            if (CorrelationCoefficient(recon.col(i), interference) > alpha) {
+            auto check = abs(CorrelationCoefficient(recon.col(i), interference));
+            if (check > alpha) {
                 indexList.push_front(i);
             }
 #endif // !_DEBUG
@@ -175,26 +180,6 @@ namespace Processor{
         return indexList;
     }
 
-    /// <summary>
-    /// Function to put the reconstruction matrix back into a single signal
-    /// </summary>
-    /// <param name="mat"></param>
-    /// <param name="iarr_of_indices"></param>
-    /// <returns></returns>
-    void MSSA::BuildSignal(ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, ValidSignal& inboardRec, ValidSignal& outboarRec)
-    {
-        for (const auto& x : iarrOfIndices) {
-            for (auto val = 0; val < input_size; val++) {
-                if (x < window_size * number_of_signals) {
-                    inboardRec[val] += mat.col(x)[val];
-                }
-                else {
-                    outboarRec[val] += mat.col(x)[val];
-                }
-            }
-        }
-
-    }
 
     
 #pragma endregion MSSA_PUBLIC_REGION

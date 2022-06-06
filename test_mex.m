@@ -9,8 +9,12 @@ for i = 1:length(vars)
 end
 
 mh = mexhost;
+time = clock;
 [in_result, out_result] = feval(mh, 'mexEntry', B_Inboard, B_Outboard);
+time = clock - time
 plot(B_Inboard(1,:))
 hold on
 plot(in_result(1,:))
+legend('Original', 'Recreation')
 hold off
+avg_in = mean(mean(B_Inboard(:, 1:length(in_result)) - in_result(:, 1:length(in_result))))
