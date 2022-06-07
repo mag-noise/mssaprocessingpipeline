@@ -9,9 +9,20 @@
       "installRoot": "${projectDir}\\build\\install\\${name}",
       "cmakeToolchain": "${projectDir}\\tools\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "intelliSenseMode": "windows-msvc-x64",
-      "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${projectDir}\\tools\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "inheritEnvironments": [ "msvc_x64_x64" ]
     }
   ]
 }

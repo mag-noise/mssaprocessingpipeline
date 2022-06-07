@@ -60,7 +60,7 @@ namespace Processor{
         }
         for (auto i = 0; i < window_size + k - 1; i++)
             builder[i] = builder[i] / counter[i];
-            //builder[i] = 0;
+
         return builder;
     }
 
@@ -130,9 +130,6 @@ namespace Processor{
         mat.row(0) = vecA;
         mat.row(1) = vecB;
 
-
-        //mat.row(0) = vectorA.data();
-        //mat.row(1) = vectorB.data();
         MatrixXd centered = mat.rowwise() - mat.colwise().mean();
         MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows());
         return cov;
@@ -159,12 +156,10 @@ namespace Processor{
     /// <param name="inboard"></param>
     /// <param name="outboard"></param>
     /// <returns></returns>
-    std::forward_list<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard) {
+    std::forward_list<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha) {
         MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(inboard.data())
                                 - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(outboard.data());
-
-        
-        double alpha = 0.005;
+        //double alpha = 0.005;
         std::forward_list<int> indexList = std::forward_list<int>();
         for (int i = 0; i < recon.cols(); i++) {
 #ifndef _DEBUG

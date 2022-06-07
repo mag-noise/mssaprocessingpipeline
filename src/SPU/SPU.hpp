@@ -50,7 +50,7 @@ namespace SignalProcessingUnit{
 		void PreProcess(A data_to_load, bool xyz = false);
 		void SetSegmentedValues(char index, double seg_index, T value);
 		void BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, char mapping, int index);
-		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, int num_of_threads = 1);
+		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.005, int num_of_threads = 1);
 		A Join();
 		A Join(char);
 		std::vector<A> operator[](char);
@@ -262,10 +262,9 @@ namespace SignalProcessingUnit{
 	/// <param name="inboard"></param>
 	/// <param name="outboard"></param>
 	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, int num_of_threads = 1) {
+	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, double alpha=0.005, int num_of_threads = 1) {
 		using Processor::MSSA;
 		using Eigen::Dense;
-		
 		for (char vec = 'x'; vec <= 'z'; vec++) {
 			for(int idx = 0; idx < inboard.size(); idx++){
 				MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
@@ -273,7 +272,7 @@ namespace SignalProcessingUnit{
 #ifdef _DEBUG
 				MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
 #endif
-				auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx]);
+				auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha);
 				inboard.BuildSignal(mat, componentList, vec, idx);
 				outboard.BuildSignal(mat, componentList, vec, idx);
 #ifdef _DEBUG

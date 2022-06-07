@@ -33,8 +33,11 @@ public:
 		matlab::data::TypedArray<double> out = std::move(inputs[1]);
 		std::vector<double> dest2(out.begin(), out.end());
 		outboard.PreProcess(dest2, true);
+		
+		matlab::data::TypedArray<double> alpha = std::move(inputs[2]);
+		double alpha_val = alpha[0];
 
-		MSSAProcessingUnit<double>::Process(inboard, outboard);
+		MSSAProcessingUnit<double>::Process(inboard, outboard, alpha[0]);
 		matlab::data::ArrayFactory factory;
 
 		auto temp = inboard.Join();

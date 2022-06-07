@@ -8,13 +8,15 @@ file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_D
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp)
 
 
-add_library(${PROJECT_NAME} SHARED ${file_search})
+add_library(${PROJECT_NAME} STATIC ${file_search})
 target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
 
 find_package(Eigen3 REQUIRED NO_MODULE)
-# Requires that a version of Matlab be installed and found
+
+# Requires that a version of Matlab be installed and found. If not found, add to PATH for Matlab_ROOT_DIR
 find_package(Matlab REQUIRED)
 
+include_directories(${EIGEN_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen Matlab::MatlabEngine Matlab::MatlabDataArray)
 
 matlab_add_mex(NAME mssa EXECUTABLE SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx Matlab::MatlabEngine Matlab::MatlabDataArray)

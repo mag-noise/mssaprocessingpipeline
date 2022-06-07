@@ -10,7 +10,7 @@ end
 
 mh = mexhost;
 time = clock;
-[in_result, out_result] = feval(mh, 'mexEntry', B_Inboard, B_Outboard);
+[in_result, out_result] = feval(mh, 'mexEntry', B_Inboard, B_Outboard, 0.005);
 time = clock - time
 plot(B_Inboard(1,:))
 hold on
