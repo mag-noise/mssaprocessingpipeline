@@ -18,6 +18,15 @@ public:
 	void operator() (matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
 		using SignalProcessingUnit::MSSAProcessingUnit;
 		checkArguments(outputs, inputs);
+		
+		matlab::data::TypedArray<double> inputSize = std::move(inputs[3]);
+		matlab::data::TypedArray<double> windowSize = std::move(inputs[4]);
+
+
+		/*PLACEHOLDER: REMOVE STATIC VALUES AFTER IMPLEMENTING PATH*/
+		Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize[0], /*Window Size*/windowSize[0]);
+
+
 		MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
 		MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
 		matlab::data::TypedArray<double> in = std::move(inputs[0]);
@@ -54,7 +63,6 @@ public:
 		// Error message template:
 		if(inputs[0].getType() != ArrayType::DOUBLE && inputs[1].getType() != ArrayType::DOUBLE)
 			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Input should be inboard and outboard.") }));
-
 		
 	}
 	void displayOnMATLAB(std::ostringstream& stream) {

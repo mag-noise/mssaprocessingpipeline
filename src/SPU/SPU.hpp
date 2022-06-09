@@ -66,9 +66,9 @@ namespace SignalProcessingUnit{
 		using namespace Processor;
 		std::vector<int> indices = {};
 		int container_size = std::size(container);
-		int num_of_segments = container_size / Processor::MSSA::input_size / (indexer(1)/3*2+1);
+		int num_of_segments = container_size / Processor::MSSA::InputSize() / (indexer(1) / 3 * 2 + 1);
 		for (auto i = 0; i < num_of_segments; i++)
-			indices.push_back((indexer(1) / 3 * 2 + 1) * i * Processor::MSSA::input_size);
+			indices.push_back((indexer(1) / 3 * 2 + 1) * i * Processor::MSSA::InputSize());
 		return indices;
 	}
 
@@ -190,7 +190,7 @@ namespace SignalProcessingUnit{
 			this->_segmented_signal_container['a'] = std::vector<A>();
 			std::for_each(indices.begin(), indices.end(), [this, data_to_load](int i) {
 				std::vector<T> copy_to = {};
-				std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::input_size, back_inserter(copy_to));
+				std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::InputSize(), back_inserter(copy_to));
 				_segmented_signal_container['a'].push_back(copy_to);
 				});
 		}
@@ -201,7 +201,7 @@ namespace SignalProcessingUnit{
 				std::for_each(indices.begin(), indices.end(), [this,val, data_to_load](int i) {
 					std::vector<T> copy_to = {};
 					//std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::input_size, back_inserter(copy_to));
-					for (auto j = 0; j < Processor::MSSA::input_size; j++) {
+					for (auto j = 0; j < Processor::MSSA::InputSize(); j++) {
 						copy_to.push_back(data_to_load[i + idx[val](j)]);
 					}
 					_segmented_signal_container[val].push_back(copy_to);
@@ -243,8 +243,8 @@ namespace SignalProcessingUnit{
 		using Processor::MSSA;
 		std::fill(_segmented_signal_container[mapping][index].begin(), _segmented_signal_container[mapping][index].end(), 0);
 		for (const auto& x : iarrOfIndices) {
-			for (auto val = 0; val < MSSA::input_size; val++) {
-				if ((x < MSSA::window_size * MSSA::number_of_signals && is_inboard) || (x >= MSSA::window_size * MSSA::number_of_signals && !is_inboard)) {
+			for (auto val = 0; val < MSSA::InputSize(); val++) {
+				if ((x < MSSA::WindowSize() * MSSA::number_of_signals && is_inboard) || (x >= MSSA::WindowSize() * MSSA::number_of_signals && !is_inboard)) {
 					_segmented_signal_container[mapping][index][val] += mat.col(x)[val];
 				}
 			}

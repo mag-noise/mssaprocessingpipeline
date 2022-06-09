@@ -23,6 +23,7 @@ namespace Testing {
                     // TODO: change to relative reference
                     test_csv = "C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\signal1.csv";
                     test_matfile = u"C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\2016\\03\\11\\MGF\\MGF_20160311_234614_235232_v2.1.0.lv2";
+                    Processor::MSSA::DynamicVariableSetup(/*Input Size*/5000, /*Window Size*/40);
                 }
 
                 ~SpuTest() override {

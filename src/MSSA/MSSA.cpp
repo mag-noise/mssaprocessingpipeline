@@ -11,8 +11,12 @@ namespace Processor{
     using namespace std;
     using Eigen::MatrixXd;
 
-    // PRIVATE FUNCTIONS
+    //Initialization of dynamic statics
+    int MSSA::dynamic_input;
+    int MSSA::dynamic_window;
+    int MSSA::dynamic_k;
 
+    // PRIVATE FUNCTIONS
 #pragma region MSSA_PRIVATE_REGION
 
     MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(ValidSignal &inboard_signal, ValidSignal &outboard_signal) {
@@ -111,33 +115,51 @@ namespace Processor{
 
 
     // PUBLIC FUNCTIONS
+    void MSSA::DynamicVariableSetup(int input, int window) {
+        if (MSSA::dynamic_input && MSSA::dynamic_window && MSSA::dynamic_k)
+            return;
+        MSSA::dynamic_input = input;
+        MSSA::dynamic_window = window;
+        MSSA::dynamic_k = input - window + 1;
+    }
+
+    //Functions to use static or dynamic values
+    int MSSA::InputSize() {
+        return !is_dynamic * input_size + is_dynamic * dynamic_input;
+    }
+    
+    int MSSA::WindowSize() {
+        return !is_dynamic * window_size + is_dynamic * dynamic_window;
+    }
+    
+    int MSSA::RemainingValues() {
+        return !is_dynamic * k + is_dynamic * dynamic_k;
+    }
 
     // NOTE: Stack size limit 128 KB
     MSSA::ReconstructionMatrix MSSA::Process(ValidSignal&inboard_signal, ValidSignal &outboard_signal) {
         assert(
-            std::size(inboard_signal) == input_size
-            && std::size(outboard_signal) == input_size
+            std::size(inboard_signal) == InputSize() && std::size(outboard_signal) == InputSize()
         );
         return GenerateProjection(GenerateTrajectoryMatrix(inboard_signal, outboard_signal));
     }
 
     // TODO: Create Covariance Matrix for 2 vectors
-    MSSA::CovMatrix MSSA::GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB) {
-        using Eigen::VectorXd;
-        MatrixXd vecA = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data());
-        MatrixXd vecB = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
-        MatrixXd mat = MatrixXd(2, MSSA::input_size);
-        mat.row(0) = vecA;
-        mat.row(1) = vecB;
+    //MSSA::CovMatrix MSSA::GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB) {
+    //    using Eigen::VectorXd;
+    //    MatrixXd vecA = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data());
+    //    MatrixXd vecB = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
+    //    MatrixXd mat = MatrixXd(2, MSSA::input_size);
+    //    mat.row(0) = vecA;
+    //    mat.row(1) = vecB;
 
-        MatrixXd centered = mat.rowwise() - mat.colwise().mean();
-        MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows());
-        return cov;
-    }
+    //    MatrixXd centered = mat.rowwise() - mat.colwise().mean();
+    //    MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows());
+    //    return cov;
+    //}
 
-    double MSSA::CorrelationCoefficient(Eigen::Matrix<double, 1, MSSA::input_size > x, Eigen::Matrix<double, 1, MSSA::input_size> y) {
-        /*MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data())
-                                - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());*/
+    double MSSA::CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y) {
+        //assert(x.cols == y.cols && x.cols== MSSA::input_size);
 
         double x_m = x.mean();
         double y_m = y.mean();
@@ -157,8 +179,10 @@ namespace Processor{
     /// <param name="outboard"></param>
     /// <returns></returns>
     std::forward_list<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha) {
-        MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(inboard.data())
-                                - Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(outboard.data());
+        Eigen::Map<Eigen::MatrixXd> x(inboard.data(), 1, InputSize());
+        Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, InputSize());
+        MatrixXd interference = x-y;
+         //MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, input_size>>(inboard.data()) - Eigen::Map<Eigen::Matrix<double, 1, input_size>>(outboard.data());
         //double alpha = 0.005;
         std::forward_list<int> indexList = std::forward_list<int>();
         for (int i = 0; i < recon.cols(); i++) {
