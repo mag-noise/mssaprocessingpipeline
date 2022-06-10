@@ -1,0 +1,3 @@
+# Install package
+.\\vcpkg\\vcpkg.exe install {package_name}:{compiler}
+$compiler = x64-windows

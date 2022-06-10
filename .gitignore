@@ -41,3 +41,14 @@
 
 # Base ignore directories
 /build
+/build_lib
+/tests/build
+/.vs
+/.vscode
+/out
+/tools/vcpkg
+/data
+
+# Matfiles to ignore
+*.mexw64
+*.asv
