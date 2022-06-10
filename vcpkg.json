@@ -8,7 +8,7 @@
       "platform": "windows"
     },
     {
-      "name": "Eigen",
+      "name": "eigen",
       "platform": "windows"
     }
   ]
