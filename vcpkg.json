@@ -1,5 +1,5 @@
 {
-  "name": "MSSAProcessingPipeline",
+  "name": "mssaprocessingpipeline",
   "version": "1.0.0",
   "description": "C++ library to process and remove interference from signals. Includes Matlab scripts to generate MEX function",
   "dependencies": [
@@ -8,7 +8,7 @@
       "platform": "windows"
     },
     {
-      "name": "eigen",
+      "name": "eigen3",
       "platform": "windows"
     }
   ]

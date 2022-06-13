@@ -268,31 +268,42 @@ namespace SignalProcessingUnit{
 		for (char vec = 'x'; vec <= 'z'; vec++) {
 			for(int idx = 0; idx < inboard.size(); idx++){
 				MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
-				// TODO: Reconstruct original vectors
+
 #ifdef _DEBUG
+				if (vec == 'x' && idx == 0) {
+					// TODO: Reconstruct original vectors
+					string path = "eigenvector.csv";
+					ofstream ofs(path);
+
+					// CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
+					using namespace Eigen;
+					IOFormat OctaveFmt(StreamPrecision, 0, ", ", "\n", "", "", "", "");
+					ofs << (mat).format(OctaveFmt);
+					ofs.close();
+				}
 				MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
 #endif
 				auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha);
 				inboard.BuildSignal(mat, componentList, vec, idx);
 				outboard.BuildSignal(mat, componentList, vec, idx);
 #ifdef _DEBUG
-				MSSA::ValidSignal inboardRecon = inboard[vec][idx];
-				MSSA::ValidSignal outboardRecon = outboard[vec][idx];
+				//MSSA::ValidSignal inboardRecon = inboard[vec][idx];
+				//MSSA::ValidSignal outboardRecon = outboard[vec][idx];
 
-				std::cout << "Mat " << idx << " size: " << mat.size() << std::endl;
-				std::cout << "N rows: " << mat.rows() << std::endl;
-				std::cout << "Row 1: " << mat.row(0) << std::endl;
-				std::cout << "N cols: " << mat.cols() << std::endl;
+				//std::cout << "Mat " << idx << " size: " << mat.size() << std::endl;
+				//std::cout << "N rows: " << mat.rows() << std::endl;
+				//std::cout << "Row 1: " << mat.row(0) << std::endl;
+				//std::cout << "N cols: " << mat.cols() << std::endl;
 
 
 
-				std::cout << "Original Signal: ";
-				for_each(inboardOriginal.begin(), inboardOriginal.end(), [](double a) {std::cout << a << ", "; });
-				std::cout << std::endl;
+				//std::cout << "Original Signal: ";
+				//for_each(inboardOriginal.begin(), inboardOriginal.end(), [](double a) {std::cout << a << ", "; });
+				//std::cout << std::endl;
 
-				std::cout << "Reconstructed Signal: ";
-				for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
-				std::cout << std::endl;
+				//std::cout << "Reconstructed Signal: ";
+				//for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
+				//std::cout << std::endl;
 				break;
 #endif // _DEBUG
 			}
@@ -325,7 +336,7 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::Join(char idx) {
 		A output;
-		output.reserve(_segmented_signal_container[idx].size() * Processor::MSSA::input_size);
+		output.reserve(_segmented_signal_container[idx].size() * Processor::MSSA::InputSize());
 		std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), [&output](A segment) {
 			output.insert(output.end(), segment.begin(), segment.end());
 			});

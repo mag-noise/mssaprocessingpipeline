@@ -58,7 +58,9 @@ Every project is different, so consider which of these sections apply to yours. 
  - Matlab installation (Tested on R2022a)
 
 ## Installation
-
+ - cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
+ - %VCPKG_ROOT%\vcpkg install
+ - matlab: %vcpkg_root%
 
 ## Usage
 Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
