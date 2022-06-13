@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 # This CMake is reliant on the existence of Eigen3 existing on the system. Use vcpkg manager on windows to also utilize the CMakeSettings.json
-
 option(test "Build all tests." ON)
 
 project(MSSAProcessingPipeline VERSION 0.1.0)

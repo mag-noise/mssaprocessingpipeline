@@ -52,8 +52,10 @@ When you're ready to make this README your own, just edit this file and use the 
 Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
 
 ## Requirements
- - C++ Compiler (Tested with MSVC on x64 system)
- - CMake (3.15 minimum)
+ - C++ Compiler 
+   - Microsoft Visual C++ 2022 Version 17.0 [Download](https://docs.microsoft.com/en-us/visualstudio/releases/2022/release-notes-v17.0)
+   - NOT TESTED: GCC C++ Compiler
+ - CMake (3.15 minimum [Download](https://cmake.org/download/))
  - VCPKG (C++ Package manager [Download](https://vcpkg.io/en/index.html))
  - Matlab installation (Tested on R2022a)
 
@@ -61,6 +63,8 @@ Every project is different, so consider which of these sections apply to yours. 
  - cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
  - %VCPKG_ROOT%\vcpkg install
  - matlab: %vcpkg_root%
+ - matlab: mex -setup
+   - mex -setup "MSVC location"
 
 ## Usage
 Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.

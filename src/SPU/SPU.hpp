@@ -132,7 +132,7 @@ namespace SignalProcessingUnit{
 		// Display results
 		std::cout << "Board dimensions: " << result1.getDimensions()[0] << ", " << result1.getDimensions()[1] << std::endl;
 
-		std::cout << "Board type: " << typeid(&result1[0][0]).name() << std::endl;
+		//std::cout << "Board type: " << typeid(&result1[0][0]).name() << std::endl;
 		std::cout << "Board first element: " << result1[0][0] << std::endl;
 
 		A dest(result1.begin(), result1.end());
