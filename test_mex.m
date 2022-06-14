@@ -29,11 +29,12 @@ function [in_result, out_result, cross_correlation, time]=test_mex(inboard, outb
     if(p.Results.build)
         build_mex(p.Results.vcpkgDir);
     end
+    addpath('releases');
     mh = mexhost;
     time = clock;
     % Mex Function Input: (inboard, outboard, correlation coefficient
     % threshold)
-    [in_result, out_result] = feval(mh, 'mexEntry', inboard, outboard, ...
+    [in_result, out_result] = feval(mh, 'MSSAMex', inboard, outboard, ...
                             p.Results.alpha, p.Results.segment, p.Results.window);
     time = clock - time
 
