@@ -5,11 +5,11 @@
   "dependencies": [
     {
       "name": "gtest",
-      "platform": "windows"
+      "platform": "windows | linux"
     },
     {
       "name": "eigen3",
-      "platform": "windows"
+      "platform": "windows | linux"
     }
   ]
 }

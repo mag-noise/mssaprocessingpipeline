@@ -21,12 +21,10 @@ namespace SignalProcessingUnit{
 	class MSSAProcessingUnit {
 
 	private:
-		
 		bool is_xyz = true;
 		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
 		std::vector<int> SegmentIndices(A& container, std::function<int(int)> indexer);
-
 		
 	public:
 		std::map<char, std::function<int(int)>> idx;
@@ -57,6 +55,7 @@ namespace SignalProcessingUnit{
 		std::size_t size();
 	};
 
+	using SignalProcessingUnit::MSSAProcessingUnit;
 	/// <summary>
 	/// 
 	/// </summary>
@@ -85,7 +84,7 @@ namespace SignalProcessingUnit{
 		// TODO: Add check that type {A} can use the push_back function and that val is a primitive
 		ifstream file{ input_file };
 		string line;
-		T val;
+		T val = T();
 		if (file.is_open()) {
 			while (getline(file, line)) {
 				std::stringstream line_stream(line);
@@ -181,7 +180,7 @@ namespace SignalProcessingUnit{
 	/// <typeparam name="A">Container type for data</typeparam>
 	/// <param name="data_to_load">Concrete container of data to be segmented</param>
 	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T, A>::PreProcess(A data_to_load, bool xyz = false)
+	inline void MSSAProcessingUnit<T, A>::PreProcess(A data_to_load, bool xyz)
 	{
 		
 		// Basic Segmentation (slicing into batches of input_size)
@@ -262,7 +261,7 @@ namespace SignalProcessingUnit{
 	/// <param name="inboard"></param>
 	/// <param name="outboard"></param>
 	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, double alpha=0.005, int num_of_threads = 1) {
+	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, double alpha, int num_of_threads) {
 		using Processor::MSSA;
 		using Eigen::Dense;
 		for (char vec = 'x'; vec <= 'z'; vec++) {
@@ -335,7 +334,7 @@ namespace SignalProcessingUnit{
 
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::Join(char idx) {
-		A output;
+		A output = A();
 		output.reserve(_segmented_signal_container[idx].size() * Processor::MSSA::InputSize());
 		std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), [&output](A segment) {
 			output.insert(output.end(), segment.begin(), segment.end());
