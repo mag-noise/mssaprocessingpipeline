@@ -212,7 +212,7 @@ namespace SignalProcessingUnit{
 	}
 	
 	template<typename T, typename A>
-	inline void SetSegmentedValues(char index, double seg_index, T value) {
+	inline void MSSAProcessingUnit<T,A>::SetSegmentedValues(char index, double seg_index, T value) {
 		_segmented_signal_container[index][seg_index] = value;
 	}
 
