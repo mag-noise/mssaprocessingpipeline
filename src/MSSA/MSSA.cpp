@@ -20,11 +20,11 @@ namespace Processor{
 #pragma region MSSA_PRIVATE_REGION
 
     MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(ValidSignal &inboard_signal, ValidSignal &outboard_signal) {
-        TrajectoryMatrix t = TrajectoryMatrix(window_size * number_of_signals, k);
-        for (auto i = 0; i < window_size; i++) {
-            for (auto j = 0; j < k; j++) {
+        TrajectoryMatrix t = TrajectoryMatrix(WindowSize() * number_of_signals, RemainingValues());
+        for (auto i = 0; i < WindowSize(); i++) {
+            for (auto j = 0; j < RemainingValues(); j++) {
                 t(i, j) = inboard_signal[i + j];
-                t(i+window_size, j) = outboard_signal[i + j];
+                t(i+ WindowSize(), j) = outboard_signal[i + j];
             }
         }
 
@@ -34,7 +34,7 @@ namespace Processor{
     MSSA::ReconstructionMatrix MSSA::GenerateProjection(TrajectoryMatrix trajectory)
     {
         Eigen::EigenSolver<TrajCovarianceMatrix> solver;
-        solver.compute(trajectory * (trajectory.transpose()) / k);
+        solver.compute(trajectory * (trajectory.transpose()) / RemainingValues());
         // Sends the projection matrix along with the solver's eigenvectors
 #ifdef _DEBUG
         string path = "eigenvector.csv";
@@ -51,18 +51,18 @@ namespace Processor{
 
     MSSA::SkewVector MSSA::SkewVectorAverage(SignalMatrix proj)
     {
-        SkewVector builder=SkewVector(window_size + k - 1);
-        SkewVector counter=SkewVector(window_size + k - 1);
+        SkewVector builder=SkewVector(WindowSize() + RemainingValues() - 1);
+        SkewVector counter=SkewVector(WindowSize() + RemainingValues() - 1);
 
         builder.setZero();
         counter.setZero();
-        for (auto i = 0; i < window_size; i++) {
-            for (auto j = 0; j < k; j++) {
+        for (auto i = 0; i < WindowSize(); i++) {
+            for (auto j = 0; j < RemainingValues(); j++) {
                 builder[i + j] += proj(i, j);
                 counter[i + j] += 1;
             }
         }
-        for (auto i = 0; i < window_size + k - 1; i++)
+        for (auto i = 0; i < WindowSize() + RemainingValues() - 1; i++)
             builder[i] = builder[i] / counter[i];
 
         return builder;
@@ -70,31 +70,31 @@ namespace Processor{
 
     MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
     {
-        ReconstructionMatrix rMatrix = ReconstructionMatrix(input_size, window_size * number_of_signals * number_of_signals);
+        ReconstructionMatrix rMatrix = ReconstructionMatrix(InputSize(), WindowSize() * number_of_signals * number_of_signals);
         /*Eigen::Vector<double, window_size> selectedEigVector;
         Eigen::Vector<double, k> projectionRowVector;
         Eigen::Matrix<double, window_size, k> endVector;*/
         Eigen::MatrixXd selectedEigVector;
         Eigen::MatrixXd projectionRowVector;
         Eigen::MatrixXd endVector;
-        for (auto m = 0; m < window_size * number_of_signals; m++) {
+        for (auto m = 0; m < WindowSize() * number_of_signals; m++) {
             for (auto sig_m = 0; sig_m < number_of_signals; sig_m++) {
                 // Reconstruction matrix of 1 input = NxLM, thus matrix created to hold NxLM^2 elements to allow an NxLM matrix for each M.
                 // Skew vector takes a matrix LxK constructed from an L vector crossed with K vector, 
                 // then generates an N vector of averages from the LxK skew diagonals
-                selectedEigVector = (eig.col(m)(Eigen::seq(sig_m * window_size, (sig_m + 1) * window_size - 1)));
+                selectedEigVector = (eig.col(m)(Eigen::seq(sig_m * WindowSize(), (sig_m + 1) * WindowSize() - 1)));
 
                 // Note: .row().traspose() does not play well with * operator. Likely need to store. 
                 // Due to size, could be dynamically stored without massive computational speed loss. Worth exploring if needed
                 projectionRowVector = proj.row(m);
                 endVector = selectedEigVector *(projectionRowVector);
-                rMatrix.col(m + window_size * number_of_signals * sig_m) = SkewVectorAverage(endVector);
+                rMatrix.col(m + WindowSize() * number_of_signals * sig_m) = SkewVectorAverage(endVector);
 #ifdef _DEBUG___
                 if(m==0){
                     cout << "selectedEigenVector: " << selectedEigVector << endl;
                     cout << "projectionRowVector: " << projectionRowVector << endl;
                     cout << "endVector: " << endVector << endl;
-                    cout << "rMatrix: " << rMatrix.col(m + window_size * number_of_signals * sig_m) << endl;
+                    cout << "rMatrix: " << rMatrix.col(m + WindowSize() * number_of_signals * sig_m) << endl;
                 }
 #endif
 
