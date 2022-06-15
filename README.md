@@ -27,18 +27,21 @@ Function outputs are ordered as follows:
 # Compilation Setup (UNFINISHED)
 ## Requirements
  - C++ Compiler 
-   - Microsoft Visual C++ 2022 Version 17.0 [Download](https://docs.microsoft.com/en-us/visualstudio/releases/2022/release-notes-v17.0)
-   - NOT TESTED: GCC C++ Compiler
-     - sudo apt-get install gcc-c++
- - CMake (3.15 minimum [Download](https://cmake.org/download/))
- - VCPKG (C++ Package manager [Download](https://vcpkg.io/en/index.html))
+   - Microsoft Visual C++ 2022 (C++ Version 17.0) [Download](https://docs.microsoft.com/en-us/visualstudio/releases/2022/release-notes-v17.0)
+   - GCC C++ 8.0 Compiler (C++ Version 17.0) 
+     - Linux: `sudo apt-get install gcc-c++`
+ - CMake (3.15 minimum)
+   - Windows: [Download](https://cmake.org/download/)
+   - Linux: `sudo apt-get install cmake-build`
+ - VCPKG (C++ Package manager)
+   - Getting Started via Cloning: [Here](https://vcpkg.io/en/getting-started.html)
  - Matlab installation (Tested on R2022a)
- - Ninja Build
-   - sudo apt-get install ninja-build
+ - Ninja Build (Usually comes with CMake)
+   - If needed on linux: `sudo apt-get install ninja-build`
 
 ## Building
- - cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
- - %VCPKG_ROOT%\vcpkg install
+ - `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake`
+   - CMake should install all packages needed, but if not: `%VCPKG_ROOT%\vcpkg install`
  - matlab: %vcpkg_root%
  - matlab: mex -setup
-   - mex -setup "MSVC location"
+   - mex -setup "C++ Compiler Location"
