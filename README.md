@@ -2,7 +2,7 @@
 ## Installation
 The MEX File is available for use as a pre-compiled function. This can be found at the [releases page](https://research-git.uiowa.edu/space-physics/epop/mssaprocessingpipeline/-/releases) for download, or in the releases folder when cloning. 
 ## Usage
-To use, unpack the ==mssa.7z== file and include the unpack location in your matlab instance. For example, if unpacking the contents to a folder called "MSSA" use the following commands in Matlab:
+To use, unpack the **mssa.7z** file and include the unpack location in your matlab instance. For example, if unpacking the contents to a folder called "MSSA" use the following commands in Matlab:
 
 ```Matlab
 % Add the unpacked MEX Function folder
