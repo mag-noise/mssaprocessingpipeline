@@ -29,7 +29,7 @@ function [in_result, out_result, cross_correlation, time]=test_mex(inboard, outb
     if(p.Results.build)
         build_mex(p.Results.vcpkgDir);
     end
-    addpath('releases');
+    addpath('release');
     mh = mexhost;
     time = clock;
     % Mex Function Input: (inboard, outboard, correlation coefficient
