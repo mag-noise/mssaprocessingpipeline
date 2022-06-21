@@ -1,7 +1,10 @@
-function import_data(data_location)
+function import_data(data_location, debug)
 
     if(~exist('data_location', 'var'))
         data_location = "data\2016\03\11\MGF\MGF_20160311_064011_065832_v2.1.0.lv2";
+    end
+    if(~exist('debug', 'var'))
+        debug = true;
     end
     if(isnumeric(data_location))
         test_location = "data\2016\03\11\MGF\";
@@ -20,5 +23,13 @@ function import_data(data_location)
     vars = fieldnames(newData1);
     for i = 1:length(vars)
         assignin('base', vars{i}, newData1.(vars{i}));
+    end
+
+    if(debug)
+        rmpath(fullfile("build","x64-Release", "mssa"))
+        addpath(fullfile("build","x64-Debug", "mssa"))
+    else
+        rmpath(fullfile("build","x64-Debug", "mssa"))
+        addpath(fullfile("build","x64-Release", "mssa"))
     end
 end

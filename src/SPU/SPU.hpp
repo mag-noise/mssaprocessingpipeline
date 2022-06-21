@@ -21,10 +21,17 @@ namespace SignalProcessingUnit{
 	class MSSAProcessingUnit {
 
 	private:
+		struct flag {
+		public:
+			bool  is_nan: 1, not_changed: 1;
+		};
+
 		bool is_xyz = true;
 		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
+		std::vector<flag> flags;
 		std::vector<int> SegmentIndices(A& container, std::function<int(int)> indexer);
+		void FindNaN(A& container);
 		
 	public:
 		std::map<char, std::function<int(int)>> idx;
@@ -43,7 +50,7 @@ namespace SignalProcessingUnit{
 		int LoadFromMatlab(std::u16string input_file);
 		int SaveToMatlab();
 #endif // !_MAT_
-
+		void FlagDiscontiunity(vector<double>);
 		void LoadCSVData(string& input_file, A& output_container);
 		void PreProcess(A data_to_load, bool xyz = false);
 		void SetSegmentedValues(char index, double seg_index, T value);
@@ -57,7 +64,7 @@ namespace SignalProcessingUnit{
 
 	using SignalProcessingUnit::MSSAProcessingUnit;
 	/// <summary>
-	/// 
+	/// Function to obtain the indices of each segment
 	/// </summary>
 	template<typename T, typename A>
 	inline std::vector<int> MSSAProcessingUnit<T, A>::SegmentIndices(A& container, std::function<int(int)> indexer)
@@ -95,7 +102,21 @@ namespace SignalProcessingUnit{
 			}
 		}
 		is_xyz = false;
+
+		// Generate flag vector
+		flags = vector<flag>(output_container.size());
 	}
+
+	template<typename T, typename A>
+	inline void MSSAProcessingUnit<T, A>::FindNaN(A& container) {
+		vector<int> nan_ind = vector<int>();
+		for (auto i = 0; i < container.size(); i++) {
+			flags[i].is_nan = std::isnan(container[i]);
+				
+		}
+	}
+
+
 
 #ifdef _MAT_
 	/// <summary>
@@ -136,6 +157,9 @@ namespace SignalProcessingUnit{
 
 		A dest(result1.begin(), result1.end());
 		//std::copy(dest.begin() + (dest.size() / 3 * axes[axis]), (dest.end() * (axes[axis] + 1) / 3), inboard_container);
+		
+		// Generate flag vector
+		flags = vector<flag>(dest.size());
 		PreProcess(dest, true);
 
 		//std::for_each(result1.begin() + (result1.getDimensions()[0] * axes[axis]), (result1.end() * axes[axis] / 3), [result1](double val) {cout << val;});
@@ -173,6 +197,20 @@ namespace SignalProcessingUnit{
 	}
 #endif // !_MAT_
 
+
+	/// <summary>
+	/// Function to setup timeseries flags
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="timeseries"></param>
+	template<typename T, typename A>
+	inline void MSSAProcessingUnit<T, A>::FlagDiscontiunity(vector<double> timeseries) {
+
+	}
+
+
+
 	/// <summary>
 	/// Pre-Processing step. Validates and segments data into correct format for matrix operations
 	/// </summary>
@@ -182,10 +220,13 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T, A>::PreProcess(A data_to_load, bool xyz)
 	{
-		
+		// Flag preprocessing on data
+		FindNaN(data_to_load);
+
 		// Basic Segmentation (slicing into batches of input_size)
+		std::vector<int> indices = SegmentIndices(data_to_load, idx['a'*!xyz + 'x'*xyz]);
+
 		if (!xyz) {
-			std::vector<int> indices = SegmentIndices(data_to_load, idx['a']);
 			this->_segmented_signal_container['a'] = std::vector<A>();
 			std::for_each(indices.begin(), indices.end(), [this, data_to_load](int i) {
 				std::vector<T> copy_to = {};
@@ -194,7 +235,6 @@ namespace SignalProcessingUnit{
 				});
 		}
 		else {
-			std::vector<int> indices = SegmentIndices(data_to_load, idx['x']);
 			for (char val = 'x'; val <= 'z'; val++) {
 				this->_segmented_signal_container[val] = std::vector<A>();
 				std::for_each(indices.begin(), indices.end(), [this,val, data_to_load](int i) {
