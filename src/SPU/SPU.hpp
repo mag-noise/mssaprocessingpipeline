@@ -8,32 +8,31 @@
 #include <algorithm> // for copy, fill
 #include <iterator> // For back_inserter
 #include <valarray>
+#include <numeric>
 #include "../MSSA/MSSA.hpp"
+#include "../Utilities/MatrixDefinitions.hpp"
 #ifdef _MAT_
 #include "MatlabEngine.hpp"
 #include "MatlabDataArray.hpp"
 #endif // !_MAT_
+
+// Using SPU instanciates flagsystem instance linking
 
 // TODO: Add functionality for parallelism
 namespace SignalProcessingUnit{
 	using namespace std;
 	template < typename T , typename A = std::vector<T>>
 	class MSSAProcessingUnit {
-
 	private:
-		struct flag {
-		public:
-			bool  is_nan: 1, not_changed: 1;
-		};
 
 		bool is_xyz = true;
 		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
-		std::vector<flag> flags;
 		std::vector<int> SegmentIndices(A& container, std::function<int(int)> indexer);
-		void FindNaN(A& container);
-		
+		Utils::FlagSystem *flags = Utils::FlagSystem::GetInstance();
+
 	public:
+
 		std::map<char, std::function<int(int)>> idx;
 		// TODO: update to cleanly check that only container types are used
 		MSSAProcessingUnit(bool board) { 
@@ -51,11 +50,12 @@ namespace SignalProcessingUnit{
 		int SaveToMatlab();
 #endif // !_MAT_
 		void FlagDiscontiunity(vector<double>);
+		void FindNaN(A container);
 		void LoadCSVData(string& input_file, A& output_container);
 		void PreProcess(A data_to_load, bool xyz = false);
 		void SetSegmentedValues(char index, double seg_index, T value);
 		void BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, char mapping, int index);
-		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.005, int num_of_threads = 1);
+		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.05, int num_of_threads = 1);
 		A Join();
 		A Join(char);
 		std::vector<A> operator[](char);
@@ -63,8 +63,11 @@ namespace SignalProcessingUnit{
 	};
 
 	using SignalProcessingUnit::MSSAProcessingUnit;
+
+
+#pragma region private
 	/// <summary>
-	/// Function to obtain the indices of each segment
+	/// Function to obtain the starting indices of each segment
 	/// </summary>
 	template<typename T, typename A>
 	inline std::vector<int> MSSAProcessingUnit<T, A>::SegmentIndices(A& container, std::function<int(int)> indexer)
@@ -73,11 +76,21 @@ namespace SignalProcessingUnit{
 		std::vector<int> indices = {};
 		int container_size = std::size(container);
 		int num_of_segments = container_size / Processor::MSSA::InputSize() / (indexer(1) / 3 * 2 + 1);
+		// How to segment:
+		// 1. Segment should be segment_size
+		// 2. A segment should not contain any discontinuity
+		//
+
+
+		// Creates the index for the starting point of each segment
 		for (auto i = 0; i < num_of_segments; i++)
 			indices.push_back((indexer(1) / 3 * 2 + 1) * i * Processor::MSSA::InputSize());
 		return indices;
 	}
 
+#pragma endregion
+
+#pragma region loading
 	/// <summary>
 	/// Static function to load CSV data into some container type
 	/// </summary>
@@ -104,17 +117,9 @@ namespace SignalProcessingUnit{
 		is_xyz = false;
 
 		// Generate flag vector
-		flags = vector<flag>(output_container.size());
+		flags->Resize(output_container.size());
 	}
 
-	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T, A>::FindNaN(A& container) {
-		vector<int> nan_ind = vector<int>();
-		for (auto i = 0; i < container.size(); i++) {
-			flags[i].is_nan = std::isnan(container[i]);
-				
-		}
-	}
 
 
 
@@ -159,7 +164,7 @@ namespace SignalProcessingUnit{
 		//std::copy(dest.begin() + (dest.size() / 3 * axes[axis]), (dest.end() * (axes[axis] + 1) / 3), inboard_container);
 		
 		// Generate flag vector
-		flags = vector<flag>(dest.size());
+		flags->Resize(dest.size());
 		PreProcess(dest, true);
 
 		//std::for_each(result1.begin() + (result1.getDimensions()[0] * axes[axis]), (result1.end() * axes[axis] / 3), [result1](double val) {cout << val;});
@@ -198,6 +203,10 @@ namespace SignalProcessingUnit{
 #endif // !_MAT_
 
 
+#pragma endregion
+
+#pragma region flagging
+
 	/// <summary>
 	/// Function to setup timeseries flags
 	/// </summary>
@@ -206,8 +215,30 @@ namespace SignalProcessingUnit{
 	/// <param name="timeseries"></param>
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T, A>::FlagDiscontiunity(vector<double> timeseries) {
+		if (flags->Size() == 0)
+			flags->Resize(timeseries.size());
 
+		double sum = std::accumulate(timeseries.begin(), timeseries.end(), 0.0);
+		double mean = sum / timeseries.size();
+
+		double sq_sum = std::inner_product(timeseries.begin(), timeseries.end(), timeseries.begin(), 0.0);
+		double stdev = std::sqrt(sq_sum / timeseries.size() - mean * mean);
+
+		for (auto i = 1; i < timeseries.size(); i++)
+			(*flags)[i].time_jump = (timeseries[i] - timeseries[i - 1]) > stdev;
 	}
+
+	template<typename T, typename A>
+	inline void MSSAProcessingUnit<T, A>::FindNaN(A container) {
+		if (flags->Size() == 0)
+			flags->Resize(container.size());
+		vector<int> nan_ind = vector<int>();
+		for (auto i = 0; i < container.size(); i++) {
+			(*flags)[i].is_nan = std::isnan(container[i]);
+
+		}
+	}
+#pragma endregion
 
 
 
@@ -220,8 +251,8 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T, A>::PreProcess(A data_to_load, bool xyz)
 	{
-		// Flag preprocessing on data
-		FindNaN(data_to_load);
+		if (flags->Size() == 0)
+			flags->Resize(data_to_load.size());
 
 		// Basic Segmentation (slicing into batches of input_size)
 		std::vector<int> indices = SegmentIndices(data_to_load, idx['a'*!xyz + 'x'*xyz]);

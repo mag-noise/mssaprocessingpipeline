@@ -9,6 +9,7 @@
 #include <vector>
 
 using namespace matlab::data;
+Utils::FlagSystem* Utils::FlagSystem::instance;
 
 class MexFunction : public matlab::mex::Function {
 private:
@@ -16,6 +17,9 @@ private:
 public:
 	void operator() (matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
 		using SignalProcessingUnit::MSSAProcessingUnit;
+
+		// Initialize flags
+
 		std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr;
 		matlabPtr = getEngine();
 		matlab::data::ArrayFactory factory;
@@ -33,13 +37,15 @@ public:
 			matlab::data::Array time = std::move(inputs[2]);
 			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
 			std::vector<double> timevec(timenum.begin(), timenum.end());
-			std::ostringstream stream;
-			stream << "Timeseries Dimensions: " << timenum.getDimensions()[0] << ", " << timenum.getDimensions()[1] << std::endl;
-			stream << "Timeseries first value: " << timevec[0] << std::endl;
+
+
+			//std::ostringstream stream;
+			//stream << "Timeseries Dimensions: " << timenum.getDimensions()[0] << ", " << timenum.getDimensions()[1] << std::endl;
+			//stream << "Timeseries first value: " << timevec[0] << std::endl;
 			//matlabPtr->feval(u"disp", 0, std::vector<Array>({ factory.createScalar(time.getNumberOfElements()) }));
-			
+			//
 			//stream << "test" << std::endl;
-			displayOnMATLAB(stream, matlabPtr, factory);
+			//displayOnMATLAB(stream, matlabPtr, factory);
 
 			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
 			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
