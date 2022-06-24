@@ -7,7 +7,7 @@ if(test)
 	file(GLOB_RECURSE file_search ${PROJECT_PARENT}/src/*.cpp ${PROJECT_PARENT}/src/*.hpp)
 	list(REMOVE_ITEM file_search ${PROJECT_PARENT}/src/main.cpp ${PROJECT_PARENT}/src/mexEntry.cpp)
 
-	add_executable(${PROJECT_NAME} ${file_search} ${PROJECT_SOURCE_DIR}/Test.cpp ${PROJECT_SOURCE_DIR}/TestSpu.cpp ${PROJECT_SOURCE_DIR}/TestProcessor.cpp)
+	add_executable(${PROJECT_NAME} ${file_search} ${PROJECT_SOURCE_DIR}/Test.cpp ${PROJECT_SOURCE_DIR}/TestSpu.cpp ${PROJECT_SOURCE_DIR}/TestFlags.cpp)
 	include_directories(${GTEST_INCLUDE_DIRS})
 	find_package(GTest REQUIRED)
 	find_package(Eigen3 REQUIRED NO_MODULE)

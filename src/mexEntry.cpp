@@ -34,10 +34,6 @@ public:
 				Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize[0], /*Window Size*/windowSize[0]);
 			}
 
-			matlab::data::Array time = std::move(inputs[2]);
-			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
-			std::vector<double> timevec(timenum.begin(), timenum.end());
-
 
 			//std::ostringstream stream;
 			//stream << "Timeseries Dimensions: " << timenum.getDimensions()[0] << ", " << timenum.getDimensions()[1] << std::endl;
@@ -49,15 +45,25 @@ public:
 
 			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
 			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
+
 			matlab::data::TypedArray<double> in = std::move(inputs[0]);
-
-
-
 			std::vector<double> dest(in.begin(), in.end());
-			inboard.PreProcess(dest, true);
 
 			matlab::data::TypedArray<double> out = std::move(inputs[1]);
 			std::vector<double> dest2(out.begin(), out.end());
+			
+			Utils::FlagSystem::GetInstance()->Resize(dest.size());
+
+			Utils::FlagSystem::GetInstance()->FindNaN(dest);
+			Utils::FlagSystem::GetInstance()->FindNaN(dest2);
+
+
+			matlab::data::Array time = std::move(inputs[2]);
+			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
+			std::vector<double> timevec(timenum.begin(), timenum.end());
+			//Utils::FlagSystem::GetInstance()->FlagDiscontiunity(timevec);
+
+			inboard.PreProcess(dest, true);
 			outboard.PreProcess(dest2, true);
 		
 			double alpha_val = 0.05;

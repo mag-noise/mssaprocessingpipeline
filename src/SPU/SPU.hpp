@@ -49,8 +49,6 @@ namespace SignalProcessingUnit{
 		int LoadFromMatlab(std::u16string input_file);
 		int SaveToMatlab();
 #endif // !_MAT_
-		void FlagDiscontiunity(vector<double>);
-		void FindNaN(A container);
 		void LoadCSVData(string& input_file, A& output_container);
 		void PreProcess(A data_to_load, bool xyz = false);
 		void SetSegmentedValues(char index, double seg_index, T value);
@@ -74,17 +72,17 @@ namespace SignalProcessingUnit{
 	{
 		using namespace Processor;
 		std::vector<int> indices = {};
-		int container_size = std::size(container);
-		int num_of_segments = container_size / Processor::MSSA::InputSize() / (indexer(1) / 3 * 2 + 1);
+		//int container_size = std::size(container);
+		//int max_num_of_segments = container_size / Processor::MSSA::InputSize() / (indexer(1) / 3 * 2 + 1);
 		// How to segment:
 		// 1. Segment should be segment_size
 		// 2. A segment should not contain any discontinuity
-		//
-
+		
+		// TODO: Extend flagging to look backwards for a potentially valid segment. Remake function call to be recursive?
 
 		// Creates the index for the starting point of each segment
-		for (auto i = 0; i < num_of_segments; i++)
-			indices.push_back((indexer(1) / 3 * 2 + 1) * i * Processor::MSSA::InputSize());
+		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * (indexer(1) / 3 * 2 + 1), indices);
+
 		return indices;
 	}
 
@@ -204,42 +202,6 @@ namespace SignalProcessingUnit{
 
 
 #pragma endregion
-
-#pragma region flagging
-
-	/// <summary>
-	/// Function to setup timeseries flags
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <typeparam name="A"></typeparam>
-	/// <param name="timeseries"></param>
-	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T, A>::FlagDiscontiunity(vector<double> timeseries) {
-		if (flags->Size() == 0)
-			flags->Resize(timeseries.size());
-
-		double sum = std::accumulate(timeseries.begin(), timeseries.end(), 0.0);
-		double mean = sum / timeseries.size();
-
-		double sq_sum = std::inner_product(timeseries.begin(), timeseries.end(), timeseries.begin(), 0.0);
-		double stdev = std::sqrt(sq_sum / timeseries.size() - mean * mean);
-
-		for (auto i = 1; i < timeseries.size(); i++)
-			(*flags)[i].time_jump = (timeseries[i] - timeseries[i - 1]) > stdev;
-	}
-
-	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T, A>::FindNaN(A container) {
-		if (flags->Size() == 0)
-			flags->Resize(container.size());
-		vector<int> nan_ind = vector<int>();
-		for (auto i = 0; i < container.size(); i++) {
-			(*flags)[i].is_nan = std::isnan(container[i]);
-
-		}
-	}
-#pragma endregion
-
 
 
 	/// <summary>
