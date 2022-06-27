@@ -36,7 +36,7 @@ namespace Processor{
         Eigen::EigenSolver<TrajCovarianceMatrix> solver;
         solver.compute(trajectory * (trajectory.transpose()) / RemainingValues());
         // Sends the projection matrix along with the solver's eigenvectors
-#ifdef _DEBUG
+#ifdef _TEST
         string path = "eigenvector.csv";
         ofstream ofs(path);
 
@@ -46,6 +46,7 @@ namespace Processor{
         ofs << (solver.eigenvectors().real()).format(OctaveFmt);
         ofs.close();
 #endif
+        // Need to consider solver.info() == Eigen::NoConvergence vs Eigen::Success
         return ReconstructMatrix((solver.eigenvectors().real().transpose()) * trajectory, solver.eigenvectors().real());
     }
 
@@ -89,7 +90,7 @@ namespace Processor{
                 projectionRowVector = proj.row(m);
                 endVector = selectedEigVector *(projectionRowVector);
                 rMatrix.col(m + WindowSize() * number_of_signals * sig_m) = SkewVectorAverage(endVector);
-#ifdef _DEBUG___
+#ifdef _TEST
                 if(m==0){
                     cout << "selectedEigenVector: " << selectedEigVector << endl;
                     cout << "projectionRowVector: " << projectionRowVector << endl;
@@ -159,8 +160,8 @@ namespace Processor{
     //}
 
     double MSSA::CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y) {
-        //assert(x.cols == y.cols && x.cols== MSSA::input_size);
-
+        assert(x.size() == y.size() && x.size() == InputSize());
+        
         double x_m = x.mean();
         double y_m = y.mean();
         x.array() -= x_m;
@@ -168,7 +169,11 @@ namespace Processor{
         double val2 = (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum())); 
         if (std::isnan(val2))
             return 0;
-        return (x.array() * y.array()).sum() / val2;
+
+        if(x.cols() != y.cols())
+            return (x.transpose().array() * y.array()).sum() / val2;
+        else
+            return (x.array() * y.array()).sum() / val2;
     }
 
     /// <summary>
@@ -182,19 +187,22 @@ namespace Processor{
         Eigen::Map<Eigen::MatrixXd> x(inboard.data(), 1, InputSize());
         Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, InputSize());
         MatrixXd interference = x-y;
+
+#ifdef _DEBUG
+        auto xsize = x.size();
+        auto ysize = y.size();
+
+#endif
+
          //MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, input_size>>(inboard.data()) - Eigen::Map<Eigen::Matrix<double, 1, input_size>>(outboard.data());
         //double alpha = 0.005;
         std::forward_list<int> indexList = std::forward_list<int>();
         for (int i = 0; i < recon.cols(); i++) {
-#ifndef _DEBUG
             auto check = abs(CorrelationCoefficient(recon.col(i), interference));
             if (check > alpha) {
                 indexList.push_front(i);
             }
-#endif // !_DEBUG
-#ifdef _DEBUG
-            indexList.push_front(i);
-#endif
+
         }
         return indexList;
     }

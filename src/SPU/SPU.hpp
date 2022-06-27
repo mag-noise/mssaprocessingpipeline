@@ -8,25 +8,32 @@
 #include <algorithm> // for copy, fill
 #include <iterator> // For back_inserter
 #include <valarray>
+#include <numeric>
 #include "../MSSA/MSSA.hpp"
+#include "../Utilities/MatrixDefinitions.hpp"
 #ifdef _MAT_
 #include "MatlabEngine.hpp"
 #include "MatlabDataArray.hpp"
 #endif // !_MAT_
+
+// Using SPU instanciates flagsystem instance linking
 
 // TODO: Add functionality for parallelism
 namespace SignalProcessingUnit{
 	using namespace std;
 	template < typename T , typename A = std::vector<T>>
 	class MSSAProcessingUnit {
-
 	private:
+
 		bool is_xyz = true;
 		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
-		std::vector<int> SegmentIndices(A& container, std::function<int(int)> indexer);
-		
+		std::vector<int> _indices;
+		void SegmentIndices(A& container, std::function<int(int)> indexer);
+		Utils::FlagSystem *flags = Utils::FlagSystem::GetInstance();
+
 	public:
+
 		std::map<char, std::function<int(int)>> idx;
 		// TODO: update to cleanly check that only container types are used
 		MSSAProcessingUnit(bool board) { 
@@ -43,34 +50,44 @@ namespace SignalProcessingUnit{
 		int LoadFromMatlab(std::u16string input_file);
 		int SaveToMatlab();
 #endif // !_MAT_
-
 		void LoadCSVData(string& input_file, A& output_container);
 		void PreProcess(A data_to_load, bool xyz = false);
 		void SetSegmentedValues(char index, double seg_index, T value);
 		void BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::forward_list<int> iarrOfIndices, char mapping, int index);
-		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.005, int num_of_threads = 1);
-		A Join();
+		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.05, int num_of_threads = 1);
+		A Join(A original = A());
 		A Join(char);
 		std::vector<A> operator[](char);
 		std::size_t size();
 	};
 
 	using SignalProcessingUnit::MSSAProcessingUnit;
+
+
+#pragma region private
 	/// <summary>
-	/// 
+	/// Function to obtain the starting indices of each segment
 	/// </summary>
 	template<typename T, typename A>
-	inline std::vector<int> MSSAProcessingUnit<T, A>::SegmentIndices(A& container, std::function<int(int)> indexer)
+	inline void MSSAProcessingUnit<T, A>::SegmentIndices(A& container, std::function<int(int)> indexer)
 	{
 		using namespace Processor;
-		std::vector<int> indices = {};
-		int container_size = std::size(container);
-		int num_of_segments = container_size / Processor::MSSA::InputSize() / (indexer(1) / 3 * 2 + 1);
-		for (auto i = 0; i < num_of_segments; i++)
-			indices.push_back((indexer(1) / 3 * 2 + 1) * i * Processor::MSSA::InputSize());
-		return indices;
+		//int container_size = std::size(container);
+		//int max_num_of_segments = container_size / Processor::MSSA::InputSize() / (indexer(1) / 3 * 2 + 1);
+		// How to segment:
+		// 1. Segment should be segment_size
+		// 2. A segment should not contain any discontinuity
+		
+		// TODO: Extend flagging to look backwards for a potentially valid segment. Remake function call to be recursive?
+
+		// Creates the index for the starting point of each segment
+		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * (indexer(1) / 3 * 2 + 1), _indices);
+
 	}
 
+#pragma endregion
+
+#pragma region loading
 	/// <summary>
 	/// Static function to load CSV data into some container type
 	/// </summary>
@@ -95,7 +112,13 @@ namespace SignalProcessingUnit{
 			}
 		}
 		is_xyz = false;
+
+		// Generate flag vector
+		flags->Resize(output_container.size());
 	}
+
+
+
 
 #ifdef _MAT_
 	/// <summary>
@@ -136,6 +159,9 @@ namespace SignalProcessingUnit{
 
 		A dest(result1.begin(), result1.end());
 		//std::copy(dest.begin() + (dest.size() / 3 * axes[axis]), (dest.end() * (axes[axis] + 1) / 3), inboard_container);
+		
+		// Generate flag vector
+		flags->Resize(dest.size());
 		PreProcess(dest, true);
 
 		//std::for_each(result1.begin() + (result1.getDimensions()[0] * axes[axis]), (result1.end() * axes[axis] / 3), [result1](double val) {cout << val;});
@@ -173,6 +199,10 @@ namespace SignalProcessingUnit{
 	}
 #endif // !_MAT_
 
+
+#pragma endregion
+
+
 	/// <summary>
 	/// Pre-Processing step. Validates and segments data into correct format for matrix operations
 	/// </summary>
@@ -182,22 +212,24 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T, A>::PreProcess(A data_to_load, bool xyz)
 	{
-		
-		// Basic Segmentation (slicing into batches of input_size)
+		if (flags->Size() == 0)
+			flags->Resize(data_to_load.size());
+
+		// Obtain all segment indices
+		SegmentIndices(data_to_load, idx['a'*!xyz + 'x'*xyz]);
+
 		if (!xyz) {
-			std::vector<int> indices = SegmentIndices(data_to_load, idx['a']);
 			this->_segmented_signal_container['a'] = std::vector<A>();
-			std::for_each(indices.begin(), indices.end(), [this, data_to_load](int i) {
+			std::for_each(_indices.begin(), _indices.end(), [this, data_to_load](int i) {
 				std::vector<T> copy_to = {};
 				std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::InputSize(), back_inserter(copy_to));
 				_segmented_signal_container['a'].push_back(copy_to);
 				});
 		}
 		else {
-			std::vector<int> indices = SegmentIndices(data_to_load, idx['x']);
 			for (char val = 'x'; val <= 'z'; val++) {
 				this->_segmented_signal_container[val] = std::vector<A>();
-				std::for_each(indices.begin(), indices.end(), [this,val, data_to_load](int i) {
+				std::for_each(_indices.begin(), _indices.end(), [this,val, data_to_load](int i) {
 					std::vector<T> copy_to = {};
 					//std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::input_size, back_inserter(copy_to));
 					for (auto j = 0; j < Processor::MSSA::InputSize(); j++) {
@@ -268,7 +300,7 @@ namespace SignalProcessingUnit{
 			for(int idx = 0; idx < inboard.size(); idx++){
 				MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
 
-#ifdef _DEBUG
+#ifdef _TEST
 				if (vec == 'x' && idx == 0) {
 					// TODO: Reconstruct original vectors
 					string path = "eigenvector.csv";
@@ -285,7 +317,7 @@ namespace SignalProcessingUnit{
 				auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha);
 				inboard.BuildSignal(mat, componentList, vec, idx);
 				outboard.BuildSignal(mat, componentList, vec, idx);
-#ifdef _DEBUG
+#ifdef _TEST
 				//MSSA::ValidSignal inboardRecon = inboard[vec][idx];
 				//MSSA::ValidSignal outboardRecon = outboard[vec][idx];
 
@@ -310,8 +342,11 @@ namespace SignalProcessingUnit{
 	}
 
 	template<typename T, typename A>
-	inline A MSSAProcessingUnit<T, A>::Join() {
-		A output = A();
+	inline A MSSAProcessingUnit<T, A>::Join(A original) {
+
+		// INITIALIZE TO ORIGINAL VALUES
+		if(original.size() == 0)
+			original = A(flags->Size(), nan("-ind"));
 		// Interesting solution to efficient concatenation of vectors:
 		// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
 		/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
@@ -322,14 +357,15 @@ namespace SignalProcessingUnit{
 			std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
 		}*/
 
+
 		for (auto i = 0; i < _segmented_signal_container['x'].size(); i++) {
 			for (auto j = 0; j < _segmented_signal_container['x'][0].size(); j++) {
-				for (auto idx = 'x'; idx <= 'z'; idx++) {
-					output.push_back(_segmented_signal_container[idx][i][j]);
+				for (auto indx = 'x'; indx <= 'z'; indx++) {
+					original[_indices[i] + idx[indx](j)] = _segmented_signal_container[indx][i][j];
 				}
 			}
 		}
-		return output;
+		return original;
 	}
 
 	template<typename T, typename A>

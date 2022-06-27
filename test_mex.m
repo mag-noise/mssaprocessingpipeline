@@ -1,4 +1,4 @@
-function [in_result, out_result, cross_correlation, time]=test_mex(inboard, outboard, varargin)
+function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboard, outboard, timeseries, varargin)
     
     
     DefaultVcpkg = fullfile(pwd, 'tools', 'vcpkg');
@@ -14,6 +14,7 @@ function [in_result, out_result, cross_correlation, time]=test_mex(inboard, outb
 
     addRequired(p, 'inboard', @isnumeric);
     addRequired(p, 'outboard', @isnumeric);
+    addRequired(p, 'timeseries', @isdatetime);
     addParameter(p,'build', false, @islogical);
     addParameter(p, 'vcpkgDir', DefaultVcpkg, checkBuild);
     addParameter(p, 'segment', 5000, @isnumeric);
@@ -24,17 +25,17 @@ function [in_result, out_result, cross_correlation, time]=test_mex(inboard, outb
     addParameter(p, 'plotting', false, @islogical);
 
     
-    parse(p, inboard, outboard, varargin{:});
+    parse(p, inboard, outboard, timeseries, varargin{:});
 
     if(p.Results.build)
         build_mex(p.Results.vcpkgDir);
     end
-    addpath('releases');
+    %addpath('release/mssa');
     mh = mexhost;
     time = clock;
     % Mex Function Input: (inboard, outboard, correlation coefficient
     % threshold)
-    [in_result, out_result] = feval(mh, 'MSSAMex', inboard, outboard, ...
+    [in_result, out_result, flags] = feval(mh, 'MSSAMex', inboard, outboard, timeseries, ...
                             p.Results.alpha, p.Results.segment, p.Results.window);
     time = clock - time
 
