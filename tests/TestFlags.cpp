@@ -102,6 +102,12 @@ namespace Testing {
                 using namespace std;
                 using Eigen::MatrixXd;
 
+                vector<double> time = vector<double>(size);
+                for (int i = 0; i < size; i++) {
+                    time[i] = i + 10*(i>= size /2);
+                }
+                flags->FlagDiscontinuity(time);
+
                 vector<int> idx = vector<int>();
                 flags->FindFlagInSegment(0, segment, idx);
 

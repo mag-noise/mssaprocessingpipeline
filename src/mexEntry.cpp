@@ -61,7 +61,7 @@ public:
 			matlab::data::Array time = std::move(inputs[2]);
 			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
 			std::vector<double> timevec(timenum.begin(), timenum.end());
-			//Utils::FlagSystem::GetInstance()->FlagDiscontiunity(timevec);
+			Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
 #ifdef _DEBUG
 			std::vector<int> nan_ind = std::vector<int>();
 			std::fstream ofs;

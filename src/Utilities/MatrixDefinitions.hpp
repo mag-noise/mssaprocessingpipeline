@@ -26,10 +26,14 @@ namespace Utils{
 
         struct flag {
         public:
-            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1;
+            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1;
 
             const bool flag::FlagRaised() {
-                return (bool)(is_nan || time_jump || skipped_value);
+                return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value);
+            }
+
+            const bool flag::TimeJumpOnly() {
+                return (bool)time_jump && !(is_nan || time_jump_used);
             }
 
             operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)); }
@@ -85,18 +89,20 @@ namespace Utils{
         /// Function to setup timeseries flags
         /// </summary>
         /// <param name="timeseries"></param>
-        void FlagDiscontiunity(std::vector<double> timeseries) {
+        void FlagDiscontinuity(std::vector<double> timeseries) {
             if (Size() == 0)
                 Resize(timeseries.size());
 
+            //std::vector<double> timediff = std::vector<double>(timeseries.size());
+            std::adjacent_difference(timeseries.begin(), timeseries.end(), timeseries.begin());
             double sum = std::accumulate(timeseries.begin(), timeseries.end(), 0.0);
+
+
             double mean = sum / timeseries.size();
 
-            double sq_sum = std::inner_product(timeseries.begin(), timeseries.end(), timeseries.begin(), 0.0);
-            double stdev = std::sqrt(sq_sum / timeseries.size() - mean * mean);
 
             for (auto i = 1; i < timeseries.size(); i++)
-                instance->flags[i].time_jump = (timeseries[i] - timeseries[i - 1]) > stdev;
+                instance->flags[i].time_jump = (timeseries[i]) > mean;
         }
         
         /// <summary>
@@ -109,7 +115,7 @@ namespace Utils{
         /// <returns></returns>
         void FindFlagInSegment(std::size_t start_idx, std::size_t segment_size, std::vector<int>& idx_vector, bool valid_past=false) {
             // Logic for recurrive overflow
-            if(start_idx >= instance->flags.size())
+            if(start_idx >= Size() || (start_idx + segment_size) > Size())
                 return;
 
             // Logic for last segment not fitting size requirements
@@ -135,7 +141,12 @@ namespace Utils{
                     [](flag& lhs, flag& rhs) {return lhs > rhs; });
                 // Flag each element in between first and last instance of invalid values
                 std::for_each(first, last+1, [](flag& ele) { ele.skipped_value = 1; });
-                int y = int(last - (instance->flags.begin())+1);
+
+                // +1 accounts for moving the flagged value past the flagged instance. However, if the flag is a time jump, we are allowed to worked on it as a starting point
+                int y = int(last - (instance->flags.begin())+1*(!instance->flags[last - (instance->flags.begin())].TimeJumpOnly()));
+                if (y == last - (instance->flags.begin()))
+                    instance->flags[y].time_jump_used = 1;
+
                 
                 // If availabe space before starting index, utilize values prior to the first flagged instance
                 if (valid_past) {
