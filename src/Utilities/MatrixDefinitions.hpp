@@ -3,7 +3,20 @@
 #include <vector>
 #include <numeric>
 #include <cmath>
+
+#ifdef _DEBUG
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <forward_list>
+#include <iterator>
+#include<windows.h>
+#endif
+
+
+
 namespace Utils{
+    // Singleton class to maintain flags across boards
 	class FlagSystem
 	{
     public:
@@ -14,12 +27,12 @@ namespace Utils{
         struct flag {
         public:
             uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1;
+
             const bool flag::FlagRaised() {
                 return (bool)(is_nan || time_jump || skipped_value);
             }
-            const uint8_t Build() {
-                return (uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge));
-            }
+
+            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)); }
 
             friend bool operator<(flag& lhs, flag& rhs) { 
                 return !lhs.FlagRaised() && rhs.FlagRaised();
@@ -51,15 +64,21 @@ namespace Utils{
             Resize(currSize);
         }
 
+        std::vector<int> Snapshot() {
+            return std::vector<int>(instance->flags.begin(), instance->flags.end());
+        }
+
+
         template<typename A = std::vector<double>>
         void FindNaN(A container) {
             if (Size() == 0)
                 Resize(container.size());
-            std::vector<int> nan_ind = std::vector<int>();
-            for (auto i = 0; i < container.size(); i++) {
-                instance->flags[i].is_nan = std::isnan(container[i]);
 
+            int i = 0;
+            for (i; i < container.size(); i++) {
+                instance->flags[i].is_nan |= std::isnan(container[i]);
             }
+
         }
 
         /// <summary>

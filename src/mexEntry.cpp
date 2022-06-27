@@ -62,6 +62,24 @@ public:
 			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
 			std::vector<double> timevec(timenum.begin(), timenum.end());
 			//Utils::FlagSystem::GetInstance()->FlagDiscontiunity(timevec);
+#ifdef _DEBUG
+			std::vector<int> nan_ind = std::vector<int>();
+			std::fstream ofs;
+			std::ostringstream stream;
+			ofs.open("vector_file.txt", std::ios_base::out);
+			int counter = 0;
+
+			for (auto i = 0; i < Utils::FlagSystem::GetInstance()->Size(); i++) {
+				if ((*Utils::FlagSystem::GetInstance())[i].FlagRaised())
+				{ 
+					ofs << std::to_string(i) << std::endl;
+					counter++;
+				}
+			}
+			stream << std::to_string(counter) << std::endl;
+			ofs.close();
+			displayOnMATLAB(stream, matlabPtr, factory);
+#endif // _DEBUG
 
 			inboard.PreProcess(dest, true);
 			outboard.PreProcess(dest2, true);
@@ -73,11 +91,16 @@ public:
 			}
 			MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 
-			auto temp = inboard.Join();
+			auto temp = inboard.Join(dest);
 			outputs[0] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
-			temp = outboard.Join();
+			temp = outboard.Join(dest2);
 			outputs[1] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
+
+			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
+
+			outputs[2] = factory.createArray({ 3, temp2.size() / 3 }, temp2.begin(), temp2.end());
+
 
 		}
 		catch (const matlab::engine::MATLABException& ex) {
