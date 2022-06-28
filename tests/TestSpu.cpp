@@ -90,8 +90,8 @@ namespace Testing {
 
                 MSSAProcessingUnit<double, vector<double>>::Process(in_unit, out_unit);
 
-                auto changed = in_unit.Join();
-                auto original = in_unit_copy.Join();
+                auto changed = in_unit.JoinSignal();
+                auto original = in_unit_copy.JoinSignal();
 
                 for (auto i = 0; i < in_unit.size(); i++) {
                     EXPECT_NEAR(original[i], changed[i], 0.1);

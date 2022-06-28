@@ -28,9 +28,11 @@ namespace SignalProcessingUnit{
 		bool is_xyz = true;
 		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
+		std::map<char, std::vector<A>> _wheel_container;
 		std::vector<int> _indices;
-		void SegmentIndices(A& container, std::function<int(int)> indexer);
 		Utils::FlagSystem *flags = Utils::FlagSystem::GetInstance();
+		void SegmentIndices(A& container, std::function<int(int)> indexer);
+		void SetupContainer(A data_to_load, pair<char, char> start_end, std::map<char, std::vector<A>>& container);
 
 	public:
 
@@ -38,6 +40,8 @@ namespace SignalProcessingUnit{
 		// TODO: update to cleanly check that only container types are used
 		MSSAProcessingUnit(bool board) { 
 			_segmented_signal_container = map<char, std::vector<A>>();
+			_wheel_container = map<char, std::vector<A>>();
+
 			idx = map<char, std::function<int(int)>>();
 			idx['x'] = [](int a) {return a * 3; };
 			idx['y'] = [](int a) {return a * 3 + 1; };
@@ -218,28 +222,25 @@ namespace SignalProcessingUnit{
 		// Obtain all segment indices
 		SegmentIndices(data_to_load, idx['a'*!xyz + 'x'*xyz]);
 
-		if (!xyz) {
-			this->_segmented_signal_container['a'] = std::vector<A>();
-			std::for_each(_indices.begin(), _indices.end(), [this, data_to_load](int i) {
-				std::vector<T> copy_to = {};
-				std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::InputSize(), back_inserter(copy_to));
-				_segmented_signal_container['a'].push_back(copy_to);
-				});
-		}
-		else {
-			for (char val = 'x'; val <= 'z'; val++) {
-				this->_segmented_signal_container[val] = std::vector<A>();
-				std::for_each(_indices.begin(), _indices.end(), [this,val, data_to_load](int i) {
-					std::vector<T> copy_to = {};
-					//std::copy(data_to_load.begin() + i, data_to_load.begin() + i + Processor::MSSA::input_size, back_inserter(copy_to));
-					for (auto j = 0; j < Processor::MSSA::InputSize(); j++) {
-						copy_to.push_back(data_to_load[i + idx[val](j)]);
-					}
-					_segmented_signal_container[val].push_back(copy_to);
-					});
+		// Setup containers to have original values
+		pair<char, char> start_end('a' * !xyz + 'x' * xyz, 'a' * !xyz + 'z' * xyz);
+		SetupContainer(data_to_load, start_end, _segmented_signal_container);
+		SetupContainer(data_to_load, start_end, _wheel_container);
+	}
 
-			
-			}
+	template<typename T, typename A>
+	inline void MSSAProcessingUnit<T, A>::SetupContainer(A data_to_load, pair<char, char> start_end, std::map<char,std::vector<A>>& container) {
+		for (char val = start_end.first; val <= start_end.second; val++) {
+			container[val] = std::vector<A>();
+			std::for_each(_indices.begin(), _indices.end(), [this, &container, val, data_to_load](int i) {
+				std::vector<T> copy_to = {};
+				for (auto j = 0; j < Processor::MSSA::InputSize(); j++) {
+					copy_to.push_back(data_to_load[i + idx[val](j)]);
+				}
+				container[val].push_back(copy_to);
+				});
+
+
 		}
 	}
 	
