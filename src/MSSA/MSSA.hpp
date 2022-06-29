@@ -60,9 +60,8 @@ namespace Processor{
             //CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
             ReconstructionMatrix static Process(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
             double static CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y);
-            std::forward_list<int> static ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha);
-            void static BuildSignal(ReconstructionMatrix mat, forward_list<int> iarrOfIndices, ValidSignal& inboardRec, ValidSignal& outboarRec);
-
+            std::vector<int> static ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha);
+            
 
     };
 }

@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <forward_list>
 #include <iterator>
 
 namespace Processor{
@@ -117,6 +116,7 @@ namespace Processor{
 
     // PUBLIC FUNCTIONS
     void MSSA::DynamicVariableSetup(int input, int window) {
+        assert(input > 0 && window > 0 && window < input);
         if (MSSA::dynamic_input && MSSA::dynamic_window && MSSA::dynamic_k)
             return;
         MSSA::dynamic_input = input;
@@ -126,15 +126,15 @@ namespace Processor{
 
     //Functions to use static or dynamic values
     int MSSA::InputSize() {
-        return !is_dynamic * input_size + is_dynamic * dynamic_input;
+        return (!is_dynamic || dynamic_input<=0) * input_size + is_dynamic * dynamic_input;
     }
     
     int MSSA::WindowSize() {
-        return !is_dynamic * window_size + is_dynamic * dynamic_window;
+        return (!is_dynamic || dynamic_window <= 0) * window_size + is_dynamic * dynamic_window;
     }
     
     int MSSA::RemainingValues() {
-        return !is_dynamic * k + is_dynamic * dynamic_k;
+        return (!is_dynamic || dynamic_k <= 0) * k + is_dynamic * dynamic_k;
     }
 
     // NOTE: Stack size limit 128 KB
@@ -159,6 +159,7 @@ namespace Processor{
     //    return cov;
     //}
 
+    
     double MSSA::CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y) {
         assert(x.size() == y.size() && x.size() == InputSize());
         
@@ -183,7 +184,7 @@ namespace Processor{
     /// <param name="inboard"></param>
     /// <param name="outboard"></param>
     /// <returns></returns>
-    std::forward_list<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha) {
+    std::vector<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha) {
         Eigen::Map<Eigen::MatrixXd> x(inboard.data(), 1, InputSize());
         Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, InputSize());
         MatrixXd interference = x-y;
@@ -196,11 +197,11 @@ namespace Processor{
 
          //MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, input_size>>(inboard.data()) - Eigen::Map<Eigen::Matrix<double, 1, input_size>>(outboard.data());
         //double alpha = 0.005;
-        std::forward_list<int> indexList = std::forward_list<int>();
+        std::vector<int> indexList = std::vector<int>();
         for (int i = 0; i < recon.cols(); i++) {
             auto check = abs(CorrelationCoefficient(recon.col(i), interference));
             if (check > alpha) {
-                indexList.push_front(i);
+                indexList.push_back(i);
             }
 
         }
