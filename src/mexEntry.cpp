@@ -45,8 +45,8 @@ public:
 
 			
 			Utils::FlagSystem::GetInstance()->Resize(dest.size());
-			Utils::FlagSystem::GetInstance()->FindNaN(dest);
-			Utils::FlagSystem::GetInstance()->FindNaN(dest2);
+			Utils::FlagSystem::GetInstance()->FlagNaN(dest);
+			Utils::FlagSystem::GetInstance()->FlagNaN(dest2);
 
 			matlab::data::Array time = std::move(inputs[2]);
 			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
@@ -81,7 +81,10 @@ public:
 
 		}
 		catch (const matlab::engine::MATLABException& ex) {
-
+			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Datenum function call didn't work. Likely error with time object.")}));
+			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar(ex.what()) }));
+		}
+		catch (std::exception const& ex) {
 			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar(ex.what()) }));
 		}
 	}

@@ -1,4 +1,4 @@
-function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboard, outboard, timeseries, varargin)
+function [in_result, out_result, flags, in_wheel, out_wheel, time]=test_mex(inboard, outboard, timeseries, varargin)
     
     
     DefaultVcpkg = fullfile(pwd, 'tools', 'vcpkg');
@@ -34,9 +34,11 @@ function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboar
     mh = mexhost;
     time = clock;
     % Mex Function Input: (inboard, outboard, correlation coefficient
-    % threshold)
-    [in_result, out_result, flags] = feval(mh, 'MSSAMex', inboard, outboard, timeseries, ...
-                            p.Results.alpha, p.Results.segment, p.Results.window);
+    % threshold, segment size, window size)
+    [in_result, out_result, flags, in_wheel, out_wheel] = ...
+        feval(mh, 'MSSAMex', inboard, outboard, timeseries, ...
+        p.Results.alpha, p.Results.segment, p.Results.window);
+
     time = clock - time
 
     plottingDisplay = in_result;
@@ -53,5 +55,5 @@ function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboar
         legend('Original', 'Recreation')
         hold off
     end
-    cross_correlation = xcorr(plottingBase(xyz(p.Results.xyz),:), plottingDisplay(xyz(p.Results.xyz),:));
+    %cross_correlation = xcorr(plottingBase(xyz(p.Results.xyz),:), plottingDisplay(xyz(p.Results.xyz),:));
 end

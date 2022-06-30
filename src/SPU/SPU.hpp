@@ -67,6 +67,7 @@ namespace SignalProcessingUnit{
 		A JoinWheel();
 		std::vector<A> operator[](char);
 		std::size_t size();
+		std::pair<int, int> SegmentIndices(int);
 	};
 
 	using SignalProcessingUnit::MSSAProcessingUnit;
@@ -129,27 +130,34 @@ namespace SignalProcessingUnit{
 
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinContainer(A original, std::map<char, std::vector<A>>& container) {
-		// INITIALIZE TO ORIGINAL VALUES
-		if (original.size() == 0)
-			original = A(flags->Size(), nan("-ind"));
-		// Interesting solution to efficient concatenation of vectors:
-		// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
-		/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
-		auto lam = [&output](A segment) {
-			output.insert(output.end(), segment.begin(), segment.end());
-		};
-		for (auto idx = 'x'; idx <= 'z'; idx++) {
-			std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
-		}*/
+		try {
+			// INITIALIZE TO ORIGINAL VALUES
+			if (original.size() == 0)
+				original = A(flags->Size(), nan("-ind"));
+			// Interesting solution to efficient concatenation of vectors:
+			// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
+			/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
+			auto lam = [&output](A segment) {
+				output.insert(output.end(), segment.begin(), segment.end());
+			};
+			for (auto idx = 'x'; idx <= 'z'; idx++) {
+				std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
+			}*/
 
-		A reconstruction = ContainerOperation(container);
+			A reconstruction = ContainerOperation(container);
 
-		for (int i = 0; i < original.size(); i++) {
-			if (!(*flags)[i].FlagRaised()) {
-				original[i] = (reconstruction[i] * !(*flags)[i].FlagRaised());
+			for (int i = 0; i < original.size(); i++) {
+				if (!(*flags)[i].FlagRaised()) {
+					original[i] = (reconstruction[i] * !(*flags)[i].FlagRaised());
+				}
 			}
+			return original;
 		}
-		return original;
+		catch (std::exception const& ex) {
+			string error_msg = ex.what();
+			error_msg.append("\nError joining containers.");
+			throw;
+		}
 	}
 
 	template<typename T, typename A>
@@ -184,14 +192,19 @@ namespace SignalProcessingUnit{
 			});
 
 		// Go through all values and assign gradient
-		for (auto i = 0; i < container['x' * is_xyz + 'a' * !is_xyz].size(); i++) {
-			flags->GetMergesInSegment(_indices[i], Processor::MSSA::InputSize(), start_end);
-			for (auto j = 0; j < container['x' * is_xyz + 'a' * !is_xyz][0].size(); j++) {
-				for (auto indx = 'x' * is_xyz + 'a' * !is_xyz; indx <= ('z' * is_xyz + 'a' * !is_xyz); indx++) {
-					int pos = _indices[i] + idx[indx](j);
-					original[pos] = original[pos] + std::move(container[indx][i][j]) * gradients.ReduceGrad(pos, start_end.second-start_end.first);
+		try {
+			for (auto i = 0; i < container['x' * is_xyz + 'a' * !is_xyz].size(); i++) {
+				flags->GetMergesInSegment(_indices[i], Processor::MSSA::InputSize(), start_end);
+				for (auto j = 0; j < container['x' * is_xyz + 'a' * !is_xyz][0].size(); j++) {
+					for (auto indx = 'x' * is_xyz + 'a' * !is_xyz; indx <= ('z' * is_xyz + 'a' * !is_xyz); indx++) {
+						int pos = _indices[i] + idx[indx](j);
+						original[pos] = original[pos] + std::move(container[indx][i][j]) * gradients.ReduceGrad(pos, start_end.second - start_end.first);
+					}
 				}
 			}
+		}
+		catch (std::exception const& ex) {
+			throw;
 		}
 		return original;
 	}
@@ -354,6 +367,12 @@ namespace SignalProcessingUnit{
 		return std::size(_segmented_signal_container.begin()->second);
 	}
 
+	template<typename T, typename A>
+	inline std::pair<int, int> MSSAProcessingUnit<T, A>::SegmentIndices(int i)
+	{
+		return std::pair<int,int>(_indices[i], _indices[i] + Processor::MSSA::InputSize()-1);
+	}
+
 	/// <summary>
 	/// Function to put the reconstruction matrix back into a single signal
 	/// </summary>
@@ -391,47 +410,66 @@ namespace SignalProcessingUnit{
 	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, double alpha, int num_of_threads) {
 		using Processor::MSSA;
 		using Eigen::Dense;
+
+		// TODO: Make work for both XYZ and non-XYZ
 		for (char vec = 'x'; vec <= 'z'; vec++) {
 			for(int idx = 0; idx < inboard.size(); idx++){
-				MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
+				try {
+					MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
 
-#ifdef _TEST
-				if (vec == 'x' && idx == 0) {
-					// TODO: Reconstruct original vectors
-					string path = "eigenvector.csv";
-					ofstream ofs(path);
+	#ifdef _TEST
+					if (vec == 'x' && idx == 0) {
+						// TODO: Reconstruct original vectors
+						string path = "eigenvector.csv";
+						ofstream ofs(path);
 
-					// CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
-					using namespace Eigen;
-					IOFormat OctaveFmt(StreamPrecision, 0, ", ", "\n", "", "", "", "");
-					ofs << (mat).format(OctaveFmt);
-					ofs.close();
-				}
-				MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
-#endif
-				auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha);
-				inboard.BuildSignal(mat, componentList, vec, idx);
-				outboard.BuildSignal(mat, componentList, vec, idx);
-#ifdef _TEST
-				//MSSA::ValidSignal inboardRecon = inboard[vec][idx];
-				//MSSA::ValidSignal outboardRecon = outboard[vec][idx];
+						// CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
+						using namespace Eigen;
+						IOFormat OctaveFmt(StreamPrecision, 0, ", ", "\n", "", "", "", "");
+						ofs << (mat).format(OctaveFmt);
+						ofs.close();
+					}
+					MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
+	#endif
+					auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha);
+					inboard.BuildSignal(mat, componentList, vec, idx);
+					outboard.BuildSignal(mat, componentList, vec, idx);
+	#ifdef _TEST
+					//MSSA::ValidSignal inboardRecon = inboard[vec][idx];
+					//MSSA::ValidSignal outboardRecon = outboard[vec][idx];
 
-				//std::cout << "Mat " << idx << " size: " << mat.size() << std::endl;
-				//std::cout << "N rows: " << mat.rows() << std::endl;
-				//std::cout << "Row 1: " << mat.row(0) << std::endl;
-				//std::cout << "N cols: " << mat.cols() << std::endl;
+					//std::cout << "Mat " << idx << " size: " << mat.size() << std::endl;
+					//std::cout << "N rows: " << mat.rows() << std::endl;
+					//std::cout << "Row 1: " << mat.row(0) << std::endl;
+					//std::cout << "N cols: " << mat.cols() << std::endl;
 
 
 
-				//std::cout << "Original Signal: ";
-				//for_each(inboardOriginal.begin(), inboardOriginal.end(), [](double a) {std::cout << a << ", "; });
-				//std::cout << std::endl;
+					//std::cout << "Original Signal: ";
+					//for_each(inboardOriginal.begin(), inboardOriginal.end(), [](double a) {std::cout << a << ", "; });
+					//std::cout << std::endl;
 
-				//std::cout << "Reconstructed Signal: ";
-				//for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
-				//std::cout << std::endl;
-				break;
+					//std::cout << "Reconstructed Signal: ";
+					//for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
+					//std::cout << std::endl;
+					break;
 #endif // _DEBUG
+				}
+				catch(std::exception const& ex) {
+					Utils::FlagSystem::GetInstance()->FlagSegment(idx, MSSA::InputSize()*3);
+
+					//std::string error_message = "";
+					//error_message.append(ex.what());
+					//error_message.append("\nError happened at component \"");
+					//error_message.push_back(vec);
+					//error_message.append("\" between C++ indices ");
+					//std::pair<int, int> indices = inboard.SegmentIndices(idx);
+					//error_message.append(std::to_string(indices.first));
+					//error_message.append(" and ");
+					//error_message.append(std::to_string(indices.second));
+
+					//throw std::exception(error_message.c_str());
+				}
 			}
 		}
 	}

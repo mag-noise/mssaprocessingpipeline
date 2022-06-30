@@ -55,7 +55,7 @@ namespace Testing {
                 vector<double> simple(size, 0.0);
                 vector<int> idx = vector<int>();
                 simple[25] = nan("-ind");
-                flags->FindNaN(simple);
+                flags->FlagNaN(simple);
                 flags->FindFlagInSegment(0, segment, idx);
 
                 EXPECT_EQ(idx.size(), 21);
@@ -78,7 +78,7 @@ namespace Testing {
                     simple[i] = nan("-ind");
                 
                 simple[33] = nan("-ind");
-                flags->FindNaN(simple);
+                flags->FlagNaN(simple);
                 flags->FindFlagInSegment(0, segment, idx);
 
                 EXPECT_EQ(idx.size(), 20);

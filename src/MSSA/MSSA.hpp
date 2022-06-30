@@ -13,9 +13,14 @@
 namespace Processor{
     using namespace std;
     using Eigen::Dynamic;
+
+    /// <summary>
+    /// Class for processing signals through MSSA. Provides public interfaces 
+    /// </summary>
     class MSSA{
         private:
-#ifdef HEAPIFY
+
+#ifdef HEAPIFY // Left open for potential usage of static definitions
             const static bool is_dynamic = false;
 #else
             const static bool is_dynamic = true;
@@ -38,15 +43,14 @@ namespace Processor{
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, window_size* number_of_signals*number_of_signals>>::type ReconstructionMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, input_size, input_size>>::type CovMatrix;
         private:
-            // TODO: Double: march 11, 2016 | 
             typedef std::conditional< is_dynamic, Eigen::Vector<double, Dynamic>, Eigen::Vector<double, window_size + k - 1>>::type SkewVector;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size, k>>::type SignalMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, k>>::type TrajectoryMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, window_size* number_of_signals>>::type TrajCovarianceMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, window_size* number_of_signals>>::type EigenVectorMatrix;
             typedef std::conditional< is_dynamic, Eigen::Matrix<double, Dynamic, Dynamic>, Eigen::Matrix<double, window_size* number_of_signals, k>>::type ProjectionMatrix;
+            
             // Separated units of work for debugging purposes
-            // TODO: fill out implemention step-wise
             TrajectoryMatrix static GenerateTrajectoryMatrix(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
             ReconstructionMatrix static GenerateProjection(TrajectoryMatrix trajectory);
             SkewVector static SkewVectorAverage(SignalMatrix proj);
@@ -57,7 +61,6 @@ namespace Processor{
             int static InputSize();
             int static WindowSize();
             int static RemainingValues();
-            //CovMatrix static GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB);
             ReconstructionMatrix static Process(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
             double static CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y);
             std::vector<int> static ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha);

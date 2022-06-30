@@ -3,7 +3,9 @@
 #include <vector>
 #include <numeric>
 #include <cmath>
-
+#ifdef _DEBUG
+#include <assert.h>
+#endif // !
 
 
 
@@ -27,7 +29,10 @@ namespace Utils{
             const bool TimeJumpOnly() {
                 return (bool)time_jump && !(is_nan || time_jump_used);
             }
-
+            
+            // Current makeup of flags:
+            // 0 0 0 0 Merge Skipped T_Jump NaN
+            // POTENTIAL EXTENSIONS: Inf values | Eigenvector unable to be calculated
             operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)); }
 
             friend bool operator<(flag& lhs, flag& rhs) { 
@@ -70,7 +75,7 @@ namespace Utils{
         /// <typeparam name="A">Indexable container type. Requires implementation of the size() function.</typeparam>
         /// <param name="container"></param>
         template<typename A = std::vector<double>>
-        void FindNaN(A container) {
+        void FlagNaN(A container) {
             if (Size() == 0)
                 Resize(container.size());
 
@@ -98,6 +103,19 @@ namespace Utils{
                 instance->flags[i].time_jump |= (timeseries[i]) > mean;
         }
         
+        /// <summary>
+        /// Function to flag a segment as skipped
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="segment_size"></param>
+        void FlagSegment(int start, int segment_size) {
+            if (start + segment_size <= Size())
+                throw std::exception("Invalid segment constraints. Unable to flag the full requested segment");
+            std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [](flag& val) {
+                val.skipped_value |= 1; 
+                });
+        }
+
         /// <summary>
         /// Checks if there is a flag raised in the segment. If there is, the next segment will start after the last flag. 
         /// If there isn't, the next segment will start at the end of the current one

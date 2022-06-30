@@ -58,6 +58,7 @@ add_custom_command(TARGET MSSAMex
                    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
                    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
                    -DEIGEN3_INCLUDE_DIRS=${EIGEN3_INCLUDE_DIRS}/Eigen
+                   -DDOC_DIR=${PROJECT_SOURCE_DIR}/docs
                    -P ${PROJECT_SOURCE_DIR}/zipfiles.cmake
 )
 
