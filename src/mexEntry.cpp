@@ -34,15 +34,6 @@ public:
 				Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize[0], /*Window Size*/windowSize[0]);
 			}
 
-
-			//std::ostringstream stream;
-			//stream << "Timeseries Dimensions: " << timenum.getDimensions()[0] << ", " << timenum.getDimensions()[1] << std::endl;
-			//stream << "Timeseries first value: " << timevec[0] << std::endl;
-			//matlabPtr->feval(u"disp", 0, std::vector<Array>({ factory.createScalar(time.getNumberOfElements()) }));
-			//
-			//stream << "test" << std::endl;
-			//displayOnMATLAB(stream, matlabPtr, factory);
-
 			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
 			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
 
@@ -51,12 +42,11 @@ public:
 
 			matlab::data::TypedArray<double> out = std::move(inputs[1]);
 			std::vector<double> dest2(out.begin(), out.end());
+
 			
 			Utils::FlagSystem::GetInstance()->Resize(dest.size());
-
 			Utils::FlagSystem::GetInstance()->FindNaN(dest);
 			Utils::FlagSystem::GetInstance()->FindNaN(dest2);
-
 
 			matlab::data::Array time = std::move(inputs[2]);
 			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
@@ -73,15 +63,20 @@ public:
 			}
 			MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 
-			auto temp = inboard.Join(dest);
+			auto temp = inboard.JoinSignal(dest);
 			outputs[0] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
-			temp = outboard.Join(dest2);
+			temp = outboard.JoinSignal(dest2);
 			outputs[1] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
 			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
-
 			outputs[2] = factory.createArray({ 3, temp2.size() / 3 }, temp2.begin(), temp2.end());
+
+			temp = inboard.JoinWheel();
+			outputs[3] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
+
+			temp = outboard.JoinWheel();
+			outputs[4] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
 
 		}

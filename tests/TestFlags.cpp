@@ -34,8 +34,6 @@ namespace Testing {
                 }
             };
 
-
-
             // Tests that Foo does Xyz.
             TEST_F(FlagTest, TestZeroPathFlags) {
                 // Exercises the Xyz feature of Foo.
