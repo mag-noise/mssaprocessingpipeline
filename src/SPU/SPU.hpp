@@ -22,6 +22,12 @@
 // TODO: Add functionality for parallelism
 namespace SignalProcessingUnit{
 	using namespace std;
+
+	/// <summary>
+	/// Instance class to contain and represent a signal as well as its processing.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
 	template < typename T , typename A = std::vector<T>>
 	class MSSAProcessingUnit {
 	private:
@@ -94,7 +100,14 @@ namespace SignalProcessingUnit{
 
 	}
 
-
+	/// <summary>
+	/// Function to initialize containers to have the corresponding input signal
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="data_to_load"></param>
+	/// <param name="start_end"></param>
+	/// <param name="container"></param>
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T, A>::SetupContainer(A data_to_load, pair<char, char> start_end, std::map<char, std::vector<A>>& container) {
 		for (char val = start_end.first; val <= start_end.second; val++) {
@@ -104,14 +117,23 @@ namespace SignalProcessingUnit{
 				for (auto j = 0; j < Processor::MSSA::InputSize(); j++) {
 					copy_to.push_back(data_to_load[i + idx[val](j)]);
 				}
-				container[val].push_back(copy_to);
+				container[val].push_back(std::move(copy_to));
 				});
 
 
 		}
 	}
 
-
+	/// <summary>
+	/// Function to use reconstruction matrix to build signal within the specified container
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="mat"></param>
+	/// <param name="iarrOfIndices"></param>
+	/// <param name="mapping"></param>
+	/// <param name="index"></param>
+	/// <param name="container"></param>
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T, A>::BuildSignalContainer(Processor::MSSA::ReconstructionMatrix mat,
 		std::vector<int> iarrOfIndices, char mapping, int index, std::map<char, std::vector<A>>& container) {
@@ -128,6 +150,14 @@ namespace SignalProcessingUnit{
 	}
 
 
+	/// <summary>
+	/// Function to connect segments in order to regenerate full signal
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="original"></param>
+	/// <param name="container"></param>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinContainer(A original, std::map<char, std::vector<A>>& container) {
 		try {
@@ -160,24 +190,22 @@ namespace SignalProcessingUnit{
 		}
 	}
 
+	/// <summary>
+	/// Function to fill new signal with reconstructed values. In the case that multiple segments overlap in their reconstruction, 
+	/// a gradient is set and used to space the weight each segment provides.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="container"></param>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::ContainerOperation(std::map<char, std::vector<A>>& container) {
-		// INITIALIZE TO ORIGINAL VALUES
+		// Empty Values
 		A original = A(flags->Size(), 0);
-		// Interesting solution to efficient concatenation of vectors:
-		// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
-		/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
-		auto lam = [&output](A segment) {
-			output.insert(output.end(), segment.begin(), segment.end());
-		};
-		for (auto idx = 'x'; idx <= 'z'; idx++) {
-			std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
-		}*/
-
 		std::pair<int, int> start_end(-1, -1);
 		Utils::Gradients gradients(original.size());
 
-		// Static: Sets to use linear reduce
+		// Static: Sets to use linear reduce. Could be utilized later if gradient reduce should be user defined
 		gradients.SetReduce([](int i) -> double { 
 			double reduced_value = std::abs(1.0 / (double(i - 1) + !(i - 1 <= 0)));
 			if (isinf(reduced_value) || isnan(reduced_value))
@@ -347,26 +375,51 @@ namespace SignalProcessingUnit{
 		SetupContainer(data_to_load, start_end, _wheel_container);
 	}
 
-	
+	/// <summary>
+	/// Way to access signal container with specification on usage
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="index"></param>
+	/// <param name="seg_index"></param>
+	/// <param name="value"></param>
 	template<typename T, typename A>
 	inline void MSSAProcessingUnit<T,A>::SetSegmentedValues(char index, double seg_index, T value) {
 		_segmented_signal_container[index][seg_index] = value;
 	}
 
-
+	/// <summary>
+	/// Signal access via operator
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="index"></param>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline std::vector<A> MSSAProcessingUnit<T, A>::operator[](char index)
 	{
 		return _segmented_signal_container[index];
 	}
 
-
+	/// <summary>
+	/// Quick access to segment size
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline std::size_t MSSAProcessingUnit<T,A>::size() 
 	{
 		return std::size(_segmented_signal_container.begin()->second);
 	}
 
+	/// <summary>
+	/// Access to the start and end index of any particular 
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="i"></param>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline std::pair<int, int> MSSAProcessingUnit<T, A>::SegmentIndices(int i)
 	{
@@ -474,11 +527,25 @@ namespace SignalProcessingUnit{
 		}
 	}
 
+
+	/// <summary>
+	/// Public interface to join reconstructed signal. Requires original signal, or a filler signal.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="original"></param>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinSignal(A original) {
 		return JoinContainer(original, _segmented_signal_container);
 	}
 
+	/// <summary>
+	/// Public interface to join wheel. Predefined usage
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <returns></returns>
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinWheel() {
 		return JoinContainer(A(0), _wheel_container);
