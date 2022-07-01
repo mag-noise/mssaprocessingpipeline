@@ -10,7 +10,9 @@
 
 
 namespace Utils{
-    // Singleton class to maintain flags across boards
+	/// <summary>
+	/// Singleton class to maintain flags across signals
+	/// </summary>
 	class FlagSystem
 	{
     public:
@@ -18,6 +20,9 @@ namespace Utils{
             nan, t_jump, skipped, merge
         };
 
+        /// <summary>
+        /// Inner structure to capture what flags can be raised and how to handle them
+        /// </summary>
         struct flag {
         public:
             uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1;
@@ -45,26 +50,44 @@ namespace Utils{
         FlagSystem() {};
         std::vector<flag> flags;
     public:
+        /// <summary>
+        /// Function to access instance of singleton
+        /// </summary>
         static FlagSystem* GetInstance() {
             if (!instance)
                 instance = new FlagSystem();
             return instance;
         }
 
+        /// <summary>
+        /// Size of singleton
+        /// </summary>
         std::size_t Size() {
             return instance->flags.size();
         }
 
+        /// <summary>
+        /// Allows changing the size of the singleton
+        /// </summary>
         void Resize(std::size_t i) {
             instance->flags.resize(i);
         }
 
+        /// <summary>
+        /// Resets the state of all flags in the singleton
+        /// </summary>
+        /// <typeparam name="A"></typeparam>
+        /// <param name="container"></param>
         void Reset() {
             auto currSize = Size();
             instance->flags.clear();
             Resize(currSize);
         }
 
+
+        /// <summary>
+        /// Provides an integer conversion of the flags within the singleton
+        /// </summary>
         std::vector<int> Snapshot() {
             return std::vector<int>(instance->flags.begin(), instance->flags.end());
         }
