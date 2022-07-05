@@ -48,10 +48,17 @@ public:
 			Utils::FlagSystem::GetInstance()->FlagNaN(dest);
 			Utils::FlagSystem::GetInstance()->FlagNaN(dest2);
 
-			matlab::data::Array time = std::move(inputs[2]);
-			matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
-			std::vector<double> timevec(timenum.begin(), timenum.end());
-			Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
+			if (inputs[2].getType() != ArrayType::DOUBLE) {
+				matlab::data::Array time = std::move(inputs[2]);
+				matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
+				std::vector<double> timevec(timenum.begin(), timenum.end());
+				Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
+			}
+			else {
+				matlab::data::TypedArray<double> timenum = std::move(inputs[2]);
+				std::vector<double> timevec(timenum.begin(), timenum.end());
+				Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
+			}
 
 			inboard.PreProcess(dest, true);
 			outboard.PreProcess(dest2, true);

@@ -7,14 +7,15 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=test_mex(inbo
     checkBuild = @(x) ischar(x) && p.Results.build;
     checkAlpha = @(x) isnumeric(x) && ~(p.Results.alpha > 1 || p.Results.alpha < -1);
     checkWindow = @(x) isnumeric(x) && ~(p.Results.window > p.Results.segment);
-    
+    checkTime = @(x) isdatetime(x) || isnumeric(x);
+
     keySet = {'x', 'y', 'z'};
     xyz = containers.Map(keySet, [1,2,3]);
     checkPlot = @(x) ischar(x) && any(strcmp(keySet, x));
 
     addRequired(p, 'inboard', @isnumeric);
     addRequired(p, 'outboard', @isnumeric);
-    addRequired(p, 'timeseries', @isdatetime);
+    addRequired(p, 'timeseries', checkTime);
     addParameter(p,'build', false, @islogical);
     addParameter(p, 'vcpkgDir', DefaultVcpkg, checkBuild);
     addParameter(p, 'segment', 5000, @isnumeric);

@@ -214,7 +214,7 @@ namespace Processor{
         x.array() -= x_m;
         y.array() -= y_m;
         double val2 = (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum())); 
-        if (std::isnan(val2))
+        if (std::isnan(val2) || val2 == 0)
             return 0;
 
         if(x.cols() != y.cols())
@@ -239,7 +239,7 @@ namespace Processor{
         for (int i = 0; i < recon.cols(); i++) {
             try {
                 auto check = abs(CorrelationCoefficient(recon.col(i), interference));
-                if (check > alpha) {
+                if (1.0-check > alpha) {
                     indexList.push_back(i);
                 }
             }
