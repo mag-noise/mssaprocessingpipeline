@@ -1,4 +1,4 @@
-function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboard, outboard, timeseries, varargin)
+function [in_result, out_result, flags, in_wheel, out_wheel, time]=test_mex(inboard, outboard, timeseries, varargin)
     
     
     DefaultVcpkg = fullfile(pwd, 'tools', 'vcpkg');
@@ -7,14 +7,15 @@ function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboar
     checkBuild = @(x) ischar(x) && p.Results.build;
     checkAlpha = @(x) isnumeric(x) && ~(p.Results.alpha > 1 || p.Results.alpha < -1);
     checkWindow = @(x) isnumeric(x) && ~(p.Results.window > p.Results.segment);
-    
+    checkTime = @(x) isdatetime(x) || isnumeric(x);
+
     keySet = {'x', 'y', 'z'};
     xyz = containers.Map(keySet, [1,2,3]);
     checkPlot = @(x) ischar(x) && any(strcmp(keySet, x));
 
     addRequired(p, 'inboard', @isnumeric);
     addRequired(p, 'outboard', @isnumeric);
-    addRequired(p, 'timeseries', @isdatetime);
+    addRequired(p, 'timeseries', checkTime);
     addParameter(p,'build', false, @islogical);
     addParameter(p, 'vcpkgDir', DefaultVcpkg, checkBuild);
     addParameter(p, 'segment', 5000, @isnumeric);
@@ -34,9 +35,11 @@ function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboar
     mh = mexhost;
     time = clock;
     % Mex Function Input: (inboard, outboard, correlation coefficient
-    % threshold)
-    [in_result, out_result, flags] = feval(mh, 'MSSAMex', inboard, outboard, timeseries, ...
-                            p.Results.alpha, p.Results.segment, p.Results.window);
+    % threshold, segment size, window size)
+    [in_result, out_result, flags, in_wheel, out_wheel] = ...
+        feval(mh, 'MSSAMex', inboard, outboard, timeseries, ...
+        p.Results.alpha, p.Results.segment, p.Results.window);
+
     time = clock - time
 
     plottingDisplay = in_result;
@@ -53,5 +56,5 @@ function [in_result, out_result, flags, cross_correlation, time]=test_mex(inboar
         legend('Original', 'Recreation')
         hold off
     end
-    cross_correlation = xcorr(plottingBase(xyz(p.Results.xyz),:), plottingDisplay(xyz(p.Results.xyz),:));
+    %cross_correlation = xcorr(plottingBase(xyz(p.Results.xyz),:), plottingDisplay(xyz(p.Results.xyz),:));
 end

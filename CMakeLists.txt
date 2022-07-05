@@ -25,7 +25,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 find_package(Matlab REQUIRED)
 if(Matlab_FOUND)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Matlab::MatlabEngine Matlab::MatlabDataArray)
-	matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx)
+	matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx DOCUMENTATION ${PROJECT_SOURCE_DIR}/docs/MSSAMex.txt)
 endif()
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 message("Debug Mode")	
@@ -33,23 +33,6 @@ enable_testing()
 add_subdirectory(tests)
 else()
 message("Release Mode")
-#[[
-install(TARGETS ${PROJECT_NAME} MSSAMex 
-		RUNTIME DESTINATION .
-		PUBLIC_HEADER DESTINATION lib)
-include(CPack)
-
-message("${EIGEN3_INCLUDE_DIRS}")
-find_program(ZIP_EXECUTABLE 7z 
-        PATHS "$ENV{ProgramFiles}/7-Zip")
-
-message("${ZIP_EXECUTABLE}")
-IF(ZIP_EXECUTABLE)
-	message("Found 7zip")
-    SET(ZIP_COMMAND "\"${ZIP_EXECUTABLE}\" a -tzip \"<ARCHIVE>\" @<FILELIST>")
-ENDIF(ZIP_EXECUTABLE)
-message("${ZIP_COMMAND}")
-#]]
 
 add_custom_command(TARGET MSSAMex
                    POST_BUILD

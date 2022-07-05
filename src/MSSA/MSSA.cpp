@@ -5,6 +5,9 @@
 #include <iostream>
 #include <fstream>
 #include <iterator>
+#ifdef _DEBUG
+#include <assert.h>
+#endif // !
 
 namespace Processor{
     using namespace std;
@@ -18,6 +21,12 @@ namespace Processor{
     // PRIVATE FUNCTIONS
 #pragma region MSSA_PRIVATE_REGION
 
+    /// <summary>
+    /// Builds the trajectory matrix based in the input signals
+    /// </summary>
+    /// <param name="inboard_signal"></param>
+    /// <param name="outboard_signal"></param>
+    /// <returns></returns>
     MSSA::TrajectoryMatrix MSSA::GenerateTrajectoryMatrix(ValidSignal &inboard_signal, ValidSignal &outboard_signal) {
         TrajectoryMatrix t = TrajectoryMatrix(WindowSize() * number_of_signals, RemainingValues());
         for (auto i = 0; i < WindowSize(); i++) {
@@ -30,6 +39,11 @@ namespace Processor{
         return t;
     }
 
+    /// <summary>
+    /// Uses the Trajectory Matrix to construct the eigenvectors. If eigenvector generation is successful, sends projection matrix to generate reconstruction matrix.
+    /// </summary>
+    /// <param name="trajectory"></param>
+    /// <returns></returns>
     MSSA::ReconstructionMatrix MSSA::GenerateProjection(TrajectoryMatrix trajectory)
     {
         Eigen::EigenSolver<TrajCovarianceMatrix> solver;
@@ -45,10 +59,17 @@ namespace Processor{
         ofs << (solver.eigenvectors().real()).format(OctaveFmt);
         ofs.close();
 #endif
+        if (solver.info() != Eigen::Success)
+            throw std::exception("Eigenvectors could not be computed. Error with input values");
         // Need to consider solver.info() == Eigen::NoConvergence vs Eigen::Success
         return ReconstructMatrix((solver.eigenvectors().real().transpose()) * trajectory, solver.eigenvectors().real());
     }
 
+    /// <summary>
+    /// Builds the skew vector average from some signal matrix LxK, where L = Window Size and K = Segment Size - L
+    /// </summary>
+    /// <param name="proj"></param>
+    /// <returns></returns>
     MSSA::SkewVector MSSA::SkewVectorAverage(SignalMatrix proj)
     {
         SkewVector builder=SkewVector(WindowSize() + RemainingValues() - 1);
@@ -68,12 +89,15 @@ namespace Processor{
         return builder;
     }
 
+    /// <summary>
+    /// Function to create the Reconstruction Matrix of NxLM, where N = segment size, L = Window Size, and M = Number of signals^2.
+    /// </summary>
+    /// <param name="proj"></param>
+    /// <param name="eig"></param>
+    /// <returns></returns>
     MSSA::ReconstructionMatrix MSSA::ReconstructMatrix(ProjectionMatrix proj, EigenVectorMatrix eig)
     {
         ReconstructionMatrix rMatrix = ReconstructionMatrix(InputSize(), WindowSize() * number_of_signals * number_of_signals);
-        /*Eigen::Vector<double, window_size> selectedEigVector;
-        Eigen::Vector<double, k> projectionRowVector;
-        Eigen::Matrix<double, window_size, k> endVector;*/
         Eigen::MatrixXd selectedEigVector;
         Eigen::MatrixXd projectionRowVector;
         Eigen::MatrixXd endVector;
@@ -113,8 +137,11 @@ namespace Processor{
 
 #pragma region MSSA_PUBLIC_REGION
 
-
-    // PUBLIC FUNCTIONS
+    /// <summary>
+    /// Setup instance of MSSA to use Dynamic variables
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="window"></param>
     void MSSA::DynamicVariableSetup(int input, int window) {
         assert(input > 0 && window > 0 && window < input);
         if (MSSA::dynamic_input && MSSA::dynamic_window && MSSA::dynamic_k)
@@ -125,50 +152,69 @@ namespace Processor{
     }
 
     //Functions to use static or dynamic values
+
+    /// <summary>
+    /// Public interface for input size decision making
+    /// </summary>
+    /// <returns></returns>
     int MSSA::InputSize() {
         return (!is_dynamic || dynamic_input<=0) * input_size + is_dynamic * dynamic_input;
     }
-    
+
+    /// <summary>
+    /// Public interface for window size decision making
+    /// </summary>
+    /// <returns></returns>
     int MSSA::WindowSize() {
         return (!is_dynamic || dynamic_window <= 0) * window_size + is_dynamic * dynamic_window;
     }
     
+    /// <summary>
+    /// Public interface for calculated remaining segment size decision making
+    /// </summary>
+    /// <returns></returns>
     int MSSA::RemainingValues() {
         return (!is_dynamic || dynamic_k <= 0) * k + is_dynamic * dynamic_k;
     }
 
-    // NOTE: Stack size limit 128 KB
+
+    /// <summary>
+    /// Public interface to process 2 signals through MSSA. NOTE: Stack size limit 128 KB
+    /// </summary>
+    /// <param name="inboard_signal"></param>
+    /// <param name="outboard_signal"></param>
+    /// <returns></returns>
     MSSA::ReconstructionMatrix MSSA::Process(ValidSignal&inboard_signal, ValidSignal &outboard_signal) {
         assert(
             std::size(inboard_signal) == InputSize() && std::size(outboard_signal) == InputSize()
         );
+        try
+        { 
         return GenerateProjection(GenerateTrajectoryMatrix(inboard_signal, outboard_signal));
+        }
+        catch (std::exception const& ex) {
+            throw;
+        }
     }
 
-    // TODO: Create Covariance Matrix for 2 vectors
-    //MSSA::CovMatrix MSSA::GenerateCovarianceMatrix(ValidSignal vectorA, ValidSignal vectorB) {
-    //    using Eigen::VectorXd;
-    //    MatrixXd vecA = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorA.data());
-    //    MatrixXd vecB = Eigen::Map<Eigen::Matrix<double, 1, MSSA::input_size>>(vectorB.data());
-    //    MatrixXd mat = MatrixXd(2, MSSA::input_size);
-    //    mat.row(0) = vecA;
-    //    mat.row(1) = vecB;
-
-    //    MatrixXd centered = mat.rowwise() - mat.colwise().mean();
-    //    MatrixXd cov = (centered.adjoint() * centered) / double(mat.rows());
-    //    return cov;
-    //}
-
-    
+    /// <summary>
+    /// Function calculations correlation coefficient between 2 vectors
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
     double MSSA::CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y) {
         assert(x.size() == y.size() && x.size() == InputSize());
+        assert(
+            (x.cols() == 1 || x.rows() == 1) && (y.cols() == 1 || y.rows() == 1)
+        );
         
         double x_m = x.mean();
         double y_m = y.mean();
         x.array() -= x_m;
         y.array() -= y_m;
         double val2 = (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum())); 
-        if (std::isnan(val2))
+        if (std::isnan(val2) || val2 == 0)
             return 0;
 
         if(x.cols() != y.cols())
@@ -189,19 +235,20 @@ namespace Processor{
         Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, InputSize());
         MatrixXd interference = x-y;
 
-#ifdef _DEBUG
-        auto xsize = x.size();
-        auto ysize = y.size();
-
-#endif
-
-         //MatrixXd interference = Eigen::Map<Eigen::Matrix<double, 1, input_size>>(inboard.data()) - Eigen::Map<Eigen::Matrix<double, 1, input_size>>(outboard.data());
-        //double alpha = 0.005;
         std::vector<int> indexList = std::vector<int>();
         for (int i = 0; i < recon.cols(); i++) {
-            auto check = abs(CorrelationCoefficient(recon.col(i), interference));
-            if (check > alpha) {
-                indexList.push_back(i);
+            try {
+                auto check = abs(CorrelationCoefficient(recon.col(i), interference));
+                if (1.0-check > alpha) {
+                    indexList.push_back(i);
+                }
+            }
+            catch (std::exception const& ex) {
+                std::string error_message = "";
+                error_message.append(ex.what());
+                error_message.append("\nError occurred in correlation coefficient calculations.");
+                throw std::exception(error_message.c_str());
+
             }
 
         }

@@ -8,6 +8,9 @@
 
 
 namespace Utils {
+	/// <summary>
+	/// Structure to organize use of gradient reduction within intersecting segments
+	/// </summary>
 	struct Gradients
 	{
 	private:
@@ -50,6 +53,9 @@ namespace Utils {
 		return used_amount;
 	}
 
+	/// <summary>
+	/// Resets gradient to initial values
+	/// </summary>
 	inline void Gradients::Reset()
 	{
 		std::fill(grads.begin(), grads.end(), 1);
