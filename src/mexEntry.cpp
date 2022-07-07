@@ -1,16 +1,13 @@
-#include "mex.hpp"
-#include "mexAdapter.hpp"
 #include "MSSA/MSSA.hpp"
 #include "SPU/SPU.hpp"
-#include <Eigen/Dense>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
-using namespace matlab::data;
+#include "mex.hpp"
+#include "mexAdapter.hpp"
 Utils::FlagSystem* Utils::FlagSystem::instance;
-
 class MexFunction : public matlab::mex::Function {
 private:
 	//std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr;
@@ -48,7 +45,7 @@ public:
 			Utils::FlagSystem::GetInstance()->FlagNaN(dest);
 			Utils::FlagSystem::GetInstance()->FlagNaN(dest2);
 
-			if (inputs[2].getType() != ArrayType::DOUBLE) {
+			if (inputs[2].getType() != matlab::data::ArrayType::DOUBLE) {
 				matlab::data::Array time = std::move(inputs[2]);
 				matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
 				std::vector<double> timevec(timenum.begin(), timenum.end());
@@ -88,26 +85,26 @@ public:
 
 		}
 		catch (const matlab::engine::MATLABException& ex) {
-			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Datenum function call didn't work. Likely error with time object.")}));
-			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar(ex.what()) }));
+			matlabPtr->feval(u"error", 0, std::vector<matlab::data::Array>({ factory.createScalar("Datenum function call didn't work. Likely error with time object.")}));
+			matlabPtr->feval(u"error", 0, std::vector<matlab::data::Array>({ factory.createScalar(ex.what()) }));
 		}
 		catch (std::exception const& ex) {
-			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar(ex.what()) }));
+			matlabPtr->feval(u"error", 0, std::vector<matlab::data::Array>({ factory.createScalar(ex.what()) }));
 		}
 	}
 
 	void checkArguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs, std::shared_ptr<matlab::engine::MATLABEngine> &matlabPtr, matlab::data::ArrayFactory& factory) {
 		// Error message template:
 		if(inputs.size() < 3)
-			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Input should be at least inboard, outboard, and timeseries.") }));
-		if(inputs[0].getType() != ArrayType::DOUBLE && inputs[1].getType() != ArrayType::DOUBLE)
-			matlabPtr->feval(u"error", 0, std::vector<Array>({ factory.createScalar("Required inputs should be matrices of double precision.") }));
+			matlabPtr->feval(u"error", 0, std::vector<matlab::data::Array>({ factory.createScalar("Input should be at least inboard, outboard, and timeseries.") }));
+		if(inputs[0].getType() != matlab::data::ArrayType::DOUBLE && inputs[1].getType() != matlab::data::ArrayType::DOUBLE)
+			matlabPtr->feval(u"error", 0, std::vector<matlab::data::Array>({ factory.createScalar("Required inputs should be matrices of double precision.") }));
 		
 	}
 	void displayOnMATLAB(std::ostringstream& stream, std::shared_ptr<matlab::engine::MATLABEngine>& matlabPtr, matlab::data::ArrayFactory& factory) {
 		// Pass stream content to MATLAB fprintf function
 		matlabPtr->feval(u"fprintf", 0,
-			std::vector<Array>({ factory.createScalar(stream.str()) }));
+			std::vector<matlab::data::Array>({ factory.createScalar(stream.str()) }));
 		// Clear stream buffer
 		stream.str("");
 	}

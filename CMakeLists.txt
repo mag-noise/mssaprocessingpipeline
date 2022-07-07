@@ -6,11 +6,36 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/mssa)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/mssa)
 message("Bin: ${CMAKE_BINARY_DIR}")
 
-project(MSSAProcessingPipeline VERSION 1.0.0)
+# Setup toolchain and compiler
+if(NOT DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED VCPKG_ROOT AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    message(FATAL_ERROR "Variable VCPKG_ROOT must be defined via command line or environment variable, or CMAKE_TOOLCHAIN_FILE must point to vcpkg.cmake.")
+endif()
+
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT})    
+        set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+    else()
+        set(CMAKE_TOOLCHAIN_FILE ${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+    endif()
+    message("${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+set(CMAKE_GENERATOR Ninja)
+if(UNIX)
+    set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+    set(CMAKE_C_COMPILER "gcc")
+    add_compile_options(-fPIC)
+endif()
+if(MSVC)
+    set(CMAKE_CXX_COMIPLER "MSVC")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+
+project(MSSAProcessingPipeline VERSION 1.1.0)
 file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.hpp)
 
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp)
-
 
 add_library(${PROJECT_NAME} STATIC ${file_search})
 target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
@@ -25,7 +50,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 find_package(Matlab REQUIRED)
 if(Matlab_FOUND)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Matlab::MatlabEngine Matlab::MatlabDataArray)
-	matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx DOCUMENTATION ${PROJECT_SOURCE_DIR}/docs/MSSAMex.txt)
+    matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx DOCUMENTATION ${PROJECT_SOURCE_DIR}/docs/MSSAMex.txt)    
 endif()
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 message("Debug Mode")	
