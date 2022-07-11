@@ -45,3 +45,6 @@ Function outputs are ordered as follows:
  - matlab: %vcpkg_root%
  - matlab: mex -setup
    - mex -setup "C++ Compiler Location"
+
+## MacOS Setup
+With MacOSX (and consequently UNIX systems), it is possible to skip the need for VcPkg installation, as Eigen is downloadable by Homebrew. Matlab is still required for compilation of Mex function.
