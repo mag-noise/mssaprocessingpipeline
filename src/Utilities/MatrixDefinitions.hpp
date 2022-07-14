@@ -3,6 +3,7 @@
 #include <vector>
 #include <numeric>
 #include <cmath>
+#include <stdexcept>
 #ifdef _DEBUG
 #include <assert.h>
 #endif // !
@@ -133,7 +134,7 @@ namespace Utils{
         /// <param name="segment_size"></param>
         void FlagSegment(int start, int segment_size) {
             if (start + segment_size <= Size())
-                throw std::exception("Invalid segment constraints. Unable to flag the full requested segment");
+                throw std::invalid_argument("Invalid segment constraints. Unable to flag the full requested segment");
             std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [](flag& val) {
                 val.skipped_value |= 1; 
                 });

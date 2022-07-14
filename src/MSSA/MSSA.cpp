@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <iterator>
+#include <stdexcept>
 #ifdef _DEBUG
 #include <assert.h>
 #endif // !
@@ -60,7 +61,8 @@ namespace Processor{
         ofs.close();
 #endif
         if (solver.info() != Eigen::Success)
-            throw std::exception("Eigenvectors could not be computed. Error with input values");
+            throw std::invalid_argument("Eigenvectors could not be computed. Error with input values");
+
         // Need to consider solver.info() == Eigen::NoConvergence vs Eigen::Success
         return ReconstructMatrix((solver.eigenvectors().real().transpose()) * trajectory, solver.eigenvectors().real());
     }
@@ -247,7 +249,7 @@ namespace Processor{
                 std::string error_message = "";
                 error_message.append(ex.what());
                 error_message.append("\nError occurred in correlation coefficient calculations.");
-                throw std::exception(error_message.c_str());
+                throw std::invalid_argument(error_message.c_str());
 
             }
 
