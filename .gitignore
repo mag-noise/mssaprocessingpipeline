@@ -49,6 +49,8 @@
 /tools/vcpkg
 /data
 /vcpkg_installed
+*Testing
+/release
 
 # Matfiles to ignore
 /*.mexw64
