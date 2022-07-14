@@ -1,26 +1,34 @@
 % MSSAMex.m Help file for MSSAMex MEX-file.
-%  MSSAMex - Signal Processing for 2 signals
-% 
-%  The calling syntax is:
-% 	
-% 	[inboard_result, outboard_result, flags, win, wout] = MSSAMex(inboard, outboard, timeline) Uses MSSA on signals with default values (alpha = 0.05, segment_size = 5000, window_size = 40)
+%  MSSAMex 
+%  Signal Processing for 2 signals
+% ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
 %
-%	[inboard_result, outboard_result, flags, win, wout] = MSSAMex(inboard, outboard, timeline, alpha) Uses MSSA on signals with user defined alpha.
-% 
-% 	[inboard_result, outboard_result, flags, win, wout] = MSSAMex(inboard, outboard, timeline, alpha, segment_size, window_size) Uses MSSA on signals with user defined alpha and sizes
-% 
+%  Syntax
+% ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	
+% 	[inboard_result, outboard_result, flags, win, wout] = MSSAMex(inboard, outboard, timeline)
+%	[inboard_result, outboard_result, flags, win, wout] = MSSAMex(inboard, outboard, timeline, alpha)
+% 	[inboard_result, outboard_result, flags, win, wout] = MSSAMex(inboard, outboard, timeline, alpha, segment_size, window_size)
+%
+%
+%  Description
+% ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%
 %	Function inputs are as ordered in the following manner:
 %		1. inboard_input: 3D magnetic field data in 3xN double value format
 %		2. outboard_input: 3D magnetic field data in 3xN double value format
 %		3. timeline: 1D matrix of datetime values representing the time the magnetic field data record was recorded
-%		4. alpha_threshold: Value between [0, 1] used to select components for reconstruction
-%		5. segment_size: Size of the N magnetic field data points to use as for each analysis cycle. If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments (exludes last segment)
-%		6. window_size: Size of the window used by MSSA when deconstructing signal.
+%		4. alpha_threshold: Value between [0, 1] used to select components for reconstruction. Defaults to 0.05
+%		5. segment_size: Size of the N magnetic field data points to use as for each analysis cycle. 
+%						 If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments 
+%						 (exludes last segment). Defaults to 5000
+%		6. window_size: Size of the window used by MSSA when deconstructing signal. Defaults to 40
 %
 %	Function outputs are ordered as follows:
 %		1. inboard_result: Reconstructed 3D magnetic field data representing the Inboard data
 %		2. outboard_result: Reconstructed 3D magnetic field data representing the Outboard data
-%		3. flags: Flags representing how each element has been affected or considered. The current makeup is an 8-bit integer with each bit representing a flag. Flags from right to left are as follows:
+%		3. flags: Flags representing how each element has been affected or considered. 
+%				  The current makeup is an 8-bit integer with each bit representing a flag. 
+%				  Flags from right to left are as follows:
 %			a. NaN: value has been registered as a NaN
 %			b. Time Jump: value represents the start of a new segment due to a discontinuity in the timeline
 %			c. Skipped: value will be equal to the original input signal
