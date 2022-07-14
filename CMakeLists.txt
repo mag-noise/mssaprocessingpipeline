@@ -25,6 +25,7 @@ endif()
 set(CMAKE_GENERATOR Ninja)
 
 # MACOS requires install eigen from brew
+# Windows requires directly setting C++ compiler via visual studio.
 if(APPLE)
     set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
     set(CMAKE_C_COMPILER "/usr/bin/clang")
@@ -32,8 +33,6 @@ elseif(UNIX)
     set(CMAKE_CXX_COMPILER "/usr/bin/g++")
     set(CMAKE_C_COMPILER "gcc")
     add_compile_options(-fPIC)
-elseif(WIN32)
-    set(CMAKE_CXX_COMPILER "MSVC")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
