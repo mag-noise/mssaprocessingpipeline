@@ -1,4 +1,7 @@
-# Pre-Compiled Usage
+# Multivariate Singular Spectrum Analysis (MSSA) Computation Tool
+### Development tool for performing MSSA on multi-dimensional signals
+
+# Pre-Compiled Binary Usage
 ## Installation
 The MEX File is available for use as a pre-compiled function. This can be found at the [releases page](https://research-git.uiowa.edu/space-physics/epop/mssaprocessingpipeline/-/releases) for download, or in the releases folder when cloning. 
 ## Usage
@@ -24,8 +27,8 @@ Function outputs are ordered as follows:
 1. inboard_result: Reconstructed 3D magnetic field data representing the Inboard data
 2. outboard_result: Reconstructed 3D magnetic field data representing the Outboard data
 
-# Compilation Setup (UNFINISHED)
-## Requirements
+# Compilation Setup
+## Requirements (Windows & Linux)
  - C++ Compiler 
    - Microsoft Visual C++ 2022 (C++ Version 17.0) [Download](https://docs.microsoft.com/en-us/visualstudio/releases/2022/release-notes-v17.0)
    - GCC C++ 8.0 Compiler (C++ Version 17.0) 
@@ -39,12 +42,20 @@ Function outputs are ordered as follows:
  - Ninja Build (Usually comes with CMake)
    - If needed on linux: `sudo apt-get install ninja-build`
 
-## Building
- - `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake`
-   - CMake should install all packages needed, but if not: `%VCPKG_ROOT%\vcpkg install`
- - matlab: %vcpkg_root%
- - matlab: mex -setup
-   - mex -setup "C++ Compiler Location"
-
 ## MacOS Setup
 With MacOSX (and consequently UNIX systems), it is possible to skip the need for VcPkg installation, as Eigen is downloadable by Homebrew. Matlab is still required for compilation of Mex function.
+
+## Building
+There are 3 options for running CMake:
+ - Set VCPKG_ROOT environment variable
+ - Set VCPKG_ROOT as a command line input
+    - example: `cmake -B build -S . -DVCPKG_ROOT=[vcpkg location]`
+ - Set CMAKE_TOOLCHAIN_FILE as a command line input
+    - `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake`
+
+CMake should install all packages needed, but if not run: `%VCPKG_ROOT%\vcpkg install`
+
+After creating build directory, build and compile the application
+ - `cmake --build \build`
+
+The built executable will be within the `build/*/mssa` folder. If in release mode, it will also zip the compiled code into the %Project_Source%/release folder.
