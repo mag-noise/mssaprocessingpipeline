@@ -18,7 +18,7 @@ namespace Utils{
 	{
     public:
         enum flagtype {
-            nan, t_jump, skipped, merge
+            seg_start, merge, skipped, t_jump, nan
         };
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Utils{
         /// </summary>
         struct flag {
         public:
-            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1;
+            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1, start_of_segment:1;
 
             const bool FlagRaised() {
                 return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value);
@@ -37,9 +37,9 @@ namespace Utils{
             }
             
             // Current makeup of flags:
-            // 0 0 0 0 Merge Skipped T_Jump NaN
+            // 0 0 0 0 NaN T_Jump Skipped Merge 
             // POTENTIAL EXTENSIONS: Inf values | Eigenvector unable to be calculated
-            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)); }
+            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)) | (start_of_segment << seg_start); }
 
             friend bool operator<(flag& lhs, flag& rhs) { 
                 return !lhs.FlagRaised() && rhs.FlagRaised();
@@ -138,6 +138,14 @@ namespace Utils{
             std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [](flag& val) {
                 val.skipped_value |= 1; 
                 });
+        }
+
+        /// <summary>
+        /// Function to flag the segment start
+        /// </summary>
+        /// <param name="start"></param>
+        void FlagSegmentStart(int start) {
+            instance->flags[start].start_of_segment |= 1;
         }
 
         /// <summary>

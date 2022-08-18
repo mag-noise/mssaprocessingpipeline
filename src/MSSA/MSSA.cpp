@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
-#ifdef _DEBUG
+#ifdef DEBUG
 #include <assert.h>
 #endif // !
 

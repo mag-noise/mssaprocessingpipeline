@@ -98,6 +98,11 @@ namespace SignalProcessingUnit{
 		// Creates the index for the starting point of each segment
 		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * (indexer(1) / 3 * 2 + 1), _indices);
 
+		//std::for_each(result1.begin() + (result1.getDimensions()[0] * axes[axis]), (result1.end() * axes[axis] / 3), [result1](double val) {cout << val;});
+		for (auto idx : _indices) {
+			flags->FlagSegmentStart(idx);
+		}
+
 	}
 
 	/// <summary>
@@ -506,7 +511,7 @@ namespace SignalProcessingUnit{
 					//for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
 					//std::cout << std::endl;
 					break;
-#endif // _DEBUG
+	#endif // _DEBUG
 				}
 				catch(std::exception const& ex) {
 					Utils::FlagSystem::GetInstance()->FlagSegment(idx, MSSA::InputSize()*3);
