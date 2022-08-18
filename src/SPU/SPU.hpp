@@ -185,6 +185,7 @@ namespace SignalProcessingUnit{
 				if (!(*flags)[i].FlagRaised()) {
 					original[i] = (reconstruction[i] * !(*flags)[i].FlagRaised());
 				}
+
 			}
 			return original;
 		}
@@ -553,7 +554,13 @@ namespace SignalProcessingUnit{
 	/// <returns></returns>
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinWheel() {
-		return JoinContainer(A(0), _wheel_container);
+		auto reconstruction = JoinContainer(A(0), _wheel_container);
+		for (auto i = 0; i < reconstruction.size(); i++) {
+			if (reconstruction[i] == 0) {
+				flags->FlagWheelSegmentIdx(i);
+			}
+		}
+		return reconstruction;
 	}
 
 	

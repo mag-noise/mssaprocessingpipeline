@@ -73,15 +73,14 @@ public:
 			temp = outboard.JoinSignal(dest2);
 			outputs[1] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
-			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
-			outputs[2] = factory.createArray({ 3, temp2.size() / 3 }, temp2.begin(), temp2.end());
-
 			temp = inboard.JoinWheel();
 			outputs[3] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
 			temp = outboard.JoinWheel();
 			outputs[4] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
+			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
+			outputs[2] = factory.createArray({ 3, temp2.size() / 3 }, temp2.begin(), temp2.end());
 
 		}
 		catch (const matlab::engine::MATLABException& ex) {

@@ -18,7 +18,7 @@ namespace Utils{
 	{
     public:
         enum flagtype {
-            seg_start, merge, skipped, t_jump, nan
+            seg_start, merge, skipped, t_jump, nan, wheel_error
         };
 
         /// <summary>
@@ -26,10 +26,10 @@ namespace Utils{
         /// </summary>
         struct flag {
         public:
-            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1, start_of_segment:1;
+            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1, start_of_segment:1, failed_wheel:1;
 
             const bool FlagRaised() {
-                return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value);
+                return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value || failed_wheel);
             }
 
             const bool TimeJumpOnly() {
@@ -39,7 +39,7 @@ namespace Utils{
             // Current makeup of flags:
             // 0 0 0 0 NaN T_Jump Skipped Merge 
             // POTENTIAL EXTENSIONS: Inf values | Eigenvector unable to be calculated
-            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)) | (start_of_segment << seg_start); }
+            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)) | (start_of_segment << seg_start) | (failed_wheel << wheel_error); }
 
             friend bool operator<(flag& lhs, flag& rhs) { 
                 return !lhs.FlagRaised() && rhs.FlagRaised();
@@ -144,8 +144,19 @@ namespace Utils{
         /// Function to flag the segment start
         /// </summary>
         /// <param name="start"></param>
-        void FlagSegmentStart(int start) {
-            instance->flags[start].start_of_segment |= 1;
+        void FlagSegmentStart(int start, int n=3) {
+            for (n; n > 0; n--) {
+                instance->flags[start+n-1].start_of_segment |= 1;
+            }
+
+        }
+
+        /// <summary>
+        /// Function to flag the segment start
+        /// </summary>
+        /// <param name="start"></param>
+        void FlagWheelSegmentIdx(int idx) {
+            instance->flags[idx].failed_wheel|= 1;
         }
 
         /// <summary>
