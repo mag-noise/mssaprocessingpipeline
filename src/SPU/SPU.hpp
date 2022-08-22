@@ -96,7 +96,7 @@ namespace SignalProcessingUnit{
 		// TODO: Extend flagging to look backwards for a potentially valid segment. Remake function call to be recursive?
 
 		// Creates the index for the starting point of each segment
-		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * (indexer(1) / 3 * 2 + 1), _indices);
+		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * (indexer(1) / 3 * 2 + 1), _indices, false, 50);
 
 		//std::for_each(result1.begin() + (result1.getDimensions()[0] * axes[axis]), (result1.end() * axes[axis] / 3), [result1](double val) {cout << val;});
 		for (auto idx : _indices) {

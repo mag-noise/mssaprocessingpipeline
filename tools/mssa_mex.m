@@ -53,6 +53,7 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
         p.Results.alpha, p.Results.segment, p.Results.window);
 
     time = clock - time;
+    disp("Time:");
     disp(time);
 
     plottingDisplay = in_result;

@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <vector>
+#include <deque>
 #include <numeric>
 #include <cmath>
 #include <stdexcept>
@@ -37,7 +38,7 @@ namespace Utils{
             }
             
             // Current makeup of flags:
-            // 0 0 0 0 NaN T_Jump Skipped Merge 
+            // 0 0 Wheel_error NaN T_Jump Skipped Merge Seg_start 
             // POTENTIAL EXTENSIONS: Inf values | Eigenvector unable to be calculated
             operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | (merge_required << merge)) | (start_of_segment << seg_start) | (failed_wheel << wheel_error); }
 
@@ -167,62 +168,96 @@ namespace Utils{
         /// <param name="start_idx"></param>
         /// <param name="segment_size"></param>
         /// <returns></returns>
-        void FindFlagInSegment(std::size_t start_idx, std::size_t segment_size, std::vector<int>& idx_vector, bool valid_past=false) {
-            // Logic for recurrive overflow
-            if(start_idx >= Size() || (!valid_past && (start_idx + segment_size) > Size()) || segment_size <= 0)
-                return;
-
-            // Logic for last segment not fitting size requirements
-            if (valid_past && (start_idx + segment_size) > Size()) {
-                idx_vector.push_back(Size() - segment_size);
-
-                // Flag merge needed for elements in the last segment
-                std::for_each(instance->flags.begin() + Size() - segment_size, instance->flags.begin() + start_idx, [](flag& ele) {ele.merge_required |= 1; });
-                return;
-            }
-
-            std::vector<flag> unraised = { flag() };
+        void FindFlagInSegment(std::size_t start_idx, std::size_t segment_size, std::vector<int>& idx_vector, bool valid_past=false, float merge_threshold = 0) {
             
-            // Finds first flag or gives last iterator
-            auto first = std::find_if(instance->flags.begin() + start_idx, instance->flags.begin() + start_idx + segment_size, [](flag& instance_flag) {
-                flag empty = flag();
-                return instance_flag > empty;
-                });
-            if (first < instance->flags.begin() + start_idx + segment_size) {
-                // Find the last flag from the starting index to the valid segment size or gives last iterator
-                auto last = std::find_end(instance->flags.begin() + start_idx, instance->flags.begin() + start_idx + segment_size, unraised.begin(), unraised.end(),
-                    [](flag& lhs, flag& rhs) {return lhs > rhs; });
-                // Flag each element in between first and last instance of invalid values
-                std::for_each(first, last+1, [](flag& ele) { ele.skipped_value = 1; });
+            std::deque<std::size_t> idx_builder(0);
+            idx_builder.push_back(start_idx);
 
-                // +1 accounts for moving the flagged value past the flagged instance. However, if the flag is a time jump, we are allowed to worked on it as a starting point
-                int y = int(last - (instance->flags.begin())+1*(!instance->flags[last - (instance->flags.begin())].TimeJumpOnly()));
-                if (y == last - (instance->flags.begin()))
-                {
-                    instance->flags[y].time_jump_used |= 1;
-                    FindFlagInSegment(y, segment_size, idx_vector, false);
+            std::deque<bool> past_builder(0);
+            past_builder.push_back(valid_past);
+            while (!idx_builder.empty())
+            {
+                start_idx = idx_builder.front();
+                idx_builder.pop_front();
+
+                valid_past = past_builder.front();
+                past_builder.pop_front();
+
+                // Logic for recurrive overflow
+                if(start_idx >= Size() || (!valid_past && (start_idx + segment_size) > Size()) || segment_size <= 0)
+                    return;
+
+                // Logic for last segment not fitting size requirements
+                if (valid_past && (start_idx + segment_size) > Size()) {
+                    idx_vector.push_back(Size() - segment_size);
+
+                    // Flag merge needed for elements in the last segment
+                    std::for_each(instance->flags.begin() + Size() - segment_size, instance->flags.begin() + start_idx, [](flag& ele) {ele.merge_required |= 1; });
                     return;
                 }
 
+                std::vector<flag> unraised = { flag() };
+            
+                // Finds first flag or gives last iterator
+                auto first = std::find_if(instance->flags.begin() + start_idx, instance->flags.begin() + start_idx + segment_size, [](flag& instance_flag) {
+                    flag empty = flag();
+                    return instance_flag > empty;
+                    });
+                if (first < instance->flags.begin() + start_idx + segment_size) {
+                    // Find the last flag from the starting index to the valid segment size or gives last iterator
+                    auto last = std::find_end(instance->flags.begin() + start_idx, instance->flags.begin() + start_idx + segment_size, unraised.begin(), unraised.end(),
+                        [](flag& lhs, flag& rhs) {return lhs > rhs; });
+                    // Flag each element in between first and last instance of invalid values
+                    std::for_each(first, last+1, [](flag& ele) { ele.skipped_value = 1; });
+
+                    // +1 accounts for moving the flagged value past the flagged instance. However, if the flag is a time jump, we are allowed to worked on it as a starting point
+                    int y = int(last - (instance->flags.begin())+1*(!instance->flags[last - (instance->flags.begin())].TimeJumpOnly()));
+                    if (y == last - (instance->flags.begin()))
+                    {
+                        instance->flags[y].time_jump_used |= 1;
+                        //FindFlagInSegment(y, segment_size, idx_vector, false, merge_threshold)
+                    }
+
                 
-                // If availabe space before starting index, utilize values prior to the first flagged instance
-                if (valid_past) {
-                    idx_vector.push_back(int(first - (instance->flags.begin())) - segment_size);
-                    std::for_each(first - segment_size, instance->flags.begin()+start_idx, [](flag& ele) {ele.merge_required |= 1; });
-                }
-                else {
-                    std::for_each(instance->flags.begin() + start_idx, first+1, [](flag& ele) { ele.skipped_value |= 1; });
-                }
-                FindFlagInSegment(y, segment_size, idx_vector, false);
-                //bool pick_idx = (y - start_idx == segment_size);
-                //// Convert iterator to integer index
-                //idx_vector.push_back((pick_idx)*start_idx + !(pick_idx) * (y + 1));
+                    // If availabe space before starting index, utilize values prior to the first flagged instance
+                    if (valid_past && merge_threshold == 0) {
+                        idx_vector.push_back(int(first - (instance->flags.begin())) - segment_size);
+                        std::for_each(first - segment_size, instance->flags.begin()+start_idx, [](flag& ele) {ele.merge_required |= 1; });
+                    }
+                    else {
+                        int end_valid_segment = start_idx + ceil(segment_size * (1-merge_threshold / 100))*int(merge_threshold > 0);
+                        auto start = instance->flags.begin() + end_valid_segment;
+                        for (auto i = start; i < first + 1; i++) {
+                            i->skipped_value |= 1;
+                        }
+                        // std::for_each(start, first + 1, [](flag& ele) { ele.skipped_value |= 1; });
+                    }
+                    //FindFlagInSegment(y, segment_size, idx_vector, false, merge_threshold);
+                    idx_builder.push_back(y);
+                    past_builder.push_back(false);
+
+                    //bool pick_idx = (y - start_idx == segment_size);
+                    //// Convert iterator to integer index
+                    //idx_vector.push_back((pick_idx)*start_idx + !(pick_idx) * (y + 1));
                 
-            }
-            else
-            {
-                idx_vector.push_back(start_idx);
-                FindFlagInSegment(start_idx + segment_size, segment_size, idx_vector, true);
+                }
+                else
+                {
+                    idx_vector.push_back(start_idx);
+                    int next_segment = start_idx + ceil(segment_size * (1 - merge_threshold / 100));
+                    //FindFlagInSegment(next_segment, segment_size, idx_vector, true, merge_threshold);
+                    idx_builder.push_back(next_segment);
+                    past_builder.push_back(true);
+
+                    if (std::find(idx_vector.begin(), idx_vector.end(), next_segment) < idx_vector.end()) {
+                        for (int i = next_segment; i < next_segment + ceil(segment_size * merge_threshold / 100); i++) {
+                    
+                            instance->flags[i].merge_required |= 1;
+                        }
+
+                    }
+
+                }
             }
         }
         
