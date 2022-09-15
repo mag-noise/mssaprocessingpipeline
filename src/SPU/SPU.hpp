@@ -168,7 +168,7 @@ namespace SignalProcessingUnit{
 		try {
 			// INITIALIZE TO ORIGINAL VALUES
 			if (original.size() == 0)
-				original = A(flags->Size(), nan("-ind"));
+				original = A(flags->Size(), 0);
 			// Interesting solution to efficient concatenation of vectors:
 			// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
 			/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);

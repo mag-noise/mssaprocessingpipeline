@@ -67,17 +67,20 @@ public:
 			}
 			MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 
-			auto temp = inboard.JoinSignal(dest);
-			outputs[0] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
-
-			temp = outboard.JoinSignal(dest2);
-			outputs[1] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
-
+			// Due to how the failed_wheel is found in the program, this ensures that the flag is correctly raised prior 
+			// to committing joined containers
+			auto temp = outboard.JoinWheel();
 			temp = inboard.JoinWheel();
 			outputs[3] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
 			temp = outboard.JoinWheel();
 			outputs[4] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
+
+			temp = inboard.JoinSignal(dest);
+			outputs[0] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
+
+			temp = outboard.JoinSignal(dest2);
+			outputs[1] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
 
 			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
 			outputs[2] = factory.createArray({ 3, temp2.size() / 3 }, temp2.begin(), temp2.end());
