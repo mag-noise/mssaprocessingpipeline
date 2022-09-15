@@ -187,17 +187,22 @@ namespace Utils{
                 if(start_idx >= Size() || (!valid_past && (start_idx + segment_size) > Size()) || segment_size <= 0)
                     return;
 
-                // Logic for last segment not fitting size requirements
+                // Logic for last segment not fitting size requirements (OUTDATED)
+                // Drop last segment if it doesn't fit
                 if (valid_past && (start_idx + segment_size) > Size()) {
-                    idx_vector.push_back(Size() - segment_size);
+                    if (merge_threshold == 0) {
+                        idx_vector.push_back(Size() - segment_size);
 
-                    // Flag merge needed for elements in the last segment
-                    std::for_each(instance->flags.begin() + Size() - segment_size, instance->flags.begin() + start_idx, [](flag& ele) {ele.merge_required |= 1; });
+                        // Flag merge needed for elements in the last segment
+                        std::for_each(instance->flags.begin() + Size() - segment_size, instance->flags.begin() + start_idx, [](flag& ele) {ele.merge_required |= 1; });
+                    }
+                    else {
+                        // Skip all values that don't fit in the merge
+                        for (int i = start_idx + ceil(segment_size * (merge_threshold / 100)); i < Size(); i++) {
 
-                    // Forward flagging needed if using merge_threshold
-                    for (int i = start_idx; i < start_idx + ceil(segment_size * (merge_threshold / 100)); i++) {
+                            instance->flags[i].skipped_value |= 1;
+                        }
 
-                        instance->flags[i].merge_required |= 1;
                     }
 
                     return;
@@ -274,7 +279,7 @@ namespace Utils{
         /// <param name=""></param>
         /// <param name="segment_size"></param>
         void GetMergesInSegment(std::size_t start_idx, std::size_t segment_size, std::pair<int, int>& idx_pair) {
-            if (instance->flags[start_idx + segment_size - 1].merge_required == 0) {
+            if (instance->flags[start_idx + segment_size - 1].merge_required == 0 || segment_size == 0) {
                 idx_pair.first = -1;
                 idx_pair.second = -1;
                 return;
@@ -286,7 +291,7 @@ namespace Utils{
             while (i >= 0 && instance->flags[i].merge_required) {
                 i--;
             }
-            idx_pair.second = i + (i < start_idx);
+            idx_pair.second= i + (i < start_idx);
         }
 
         /// <summary>

@@ -125,14 +125,14 @@ namespace Testing {
                 flags->FlagNaN(simple);
                 flags->FindFlagInSegment(0, segment, idx, false, 50);
 
-                EXPECT_EQ(idx.size(), 38);
+                EXPECT_EQ(idx.size(), 37);
 
-                int vals[] = { 15,16,17,18,19,190,191,192,193,194 };
+                int vals[] = { 15,16,17,18,19,186,187,188,189};
                 for (auto i : vals) {
                     EXPECT_EQ((*flags)[i].merge_required, 1);
                 }
 
-                int novals[] = { 20,21,23,24,196, 197, 198, 199 };
+                int novals[] = { 196, 197, 198, 199 };
                 for (auto i : novals) {
                     EXPECT_EQ((*flags)[i].skipped_value, 1);
                 }

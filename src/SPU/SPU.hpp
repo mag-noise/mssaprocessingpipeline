@@ -41,7 +41,7 @@ namespace SignalProcessingUnit{
 		void SegmentIndices(A& container, std::function<int(int)> indexer);
 		void SetupContainer(A data_to_load, pair<char, char> start_end, std::map<char, std::vector<A>>& container);
 		A JoinContainer(A original, std::map<char, std::vector<A>>&);
-		A ContainerOperation(std::map<char, std::vector<A>>& container);
+		A ContainerOperation(std::map<char, std::vector<A>>& container, float merge_threshold=0);
 		void BuildSignalContainer(Processor::MSSA::ReconstructionMatrix mat, std::vector<int> iarrOfIndices, char mapping, int index, std::map<char, std::vector<A>> &container);
 
 	public:
@@ -166,9 +166,12 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinContainer(A original, std::map<char, std::vector<A>>& container) {
 		try {
+			float merge_threshold = 50;
 			// INITIALIZE TO ORIGINAL VALUES
-			if (original.size() == 0)
+			if (original.size() == 0) {
 				original = A(flags->Size(), 0);
+				merge_threshold = 100;
+			}
 			// Interesting solution to efficient concatenation of vectors:
 			// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
 			/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
@@ -179,7 +182,7 @@ namespace SignalProcessingUnit{
 				std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
 			}*/
 
-			A reconstruction = ContainerOperation(container);
+			A reconstruction = ContainerOperation(container, merge_threshold);
 
 			for (int i = 0; i < original.size(); i++) {
 				if (!(*flags)[i].FlagRaised()) {
@@ -205,7 +208,7 @@ namespace SignalProcessingUnit{
 	/// <param name="container"></param>
 	/// <returns></returns>
 	template<typename T, typename A>
-	inline A MSSAProcessingUnit<T, A>::ContainerOperation(std::map<char, std::vector<A>>& container) {
+	inline A MSSAProcessingUnit<T, A>::ContainerOperation(std::map<char, std::vector<A>>& container, float merge_threshold) {
 		// Empty Values
 		A original = A(flags->Size(), 0);
 		std::pair<int, int> start_end(-1, -1);
@@ -228,11 +231,11 @@ namespace SignalProcessingUnit{
 		// Go through all values and assign gradient
 		try {
 			for (auto i = 0; i < container['x' * is_xyz + 'a' * !is_xyz].size(); i++) {
-				flags->GetMergesInSegment(_indices[i], Processor::MSSA::InputSize(), start_end);
+				//flags->GetMergesInSegment(_indices[i], std::ceil(Processor::MSSA::InputSize() * (1-merge_threshold/100)), start_end);
 				for (auto j = 0; j < container['x' * is_xyz + 'a' * !is_xyz][0].size(); j++) {
 					for (auto indx = 'x' * is_xyz + 'a' * !is_xyz; indx <= ('z' * is_xyz + 'a' * !is_xyz); indx++) {
 						int pos = _indices[i] + idx[indx](j);
-						original[pos] = original[pos] + std::move(container[indx][i][j]) * gradients.ReduceGrad(pos, start_end.second - start_end.first);
+						original[pos] = original[pos] + std::move(container[indx][i][j]) * gradients.ReduceGrad(pos, std::ceil(Processor::MSSA::InputSize() * (1 - merge_threshold / 100)));
 					}
 				}
 			}
