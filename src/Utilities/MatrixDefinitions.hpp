@@ -193,6 +193,13 @@ namespace Utils{
 
                     // Flag merge needed for elements in the last segment
                     std::for_each(instance->flags.begin() + Size() - segment_size, instance->flags.begin() + start_idx, [](flag& ele) {ele.merge_required |= 1; });
+
+                    // Forward flagging needed if using merge_threshold
+                    for (int i = start_idx; i < start_idx + ceil(segment_size * (merge_threshold / 100)); i++) {
+
+                        instance->flags[i].merge_required |= 1;
+                    }
+
                     return;
                 }
 
@@ -220,7 +227,8 @@ namespace Utils{
 
                 
                     // If availabe space before starting index, utilize values prior to the first flagged instance
-                    if (valid_past && merge_threshold == 0) {
+                    if (valid_past && merge_threshold == 0 && start_idx < int(first - (instance->flags.begin()))) {
+
                         idx_vector.push_back(int(first - (instance->flags.begin())) - segment_size);
                         std::for_each(first - segment_size, instance->flags.begin()+start_idx, [](flag& ele) {ele.merge_required |= 1; });
                     }
@@ -232,7 +240,6 @@ namespace Utils{
                         }
                         // std::for_each(start, first + 1, [](flag& ele) { ele.skipped_value |= 1; });
                     }
-                    //FindFlagInSegment(y, segment_size, idx_vector, false, merge_threshold);
                     idx_builder.push_back(y);
                     past_builder.push_back(false);
 
@@ -245,19 +252,19 @@ namespace Utils{
                 {
                     idx_vector.push_back(start_idx);
                     int next_segment = start_idx + ceil(segment_size * (1 - merge_threshold / 100));
-                    //FindFlagInSegment(next_segment, segment_size, idx_vector, true, merge_threshold);
                     idx_builder.push_back(next_segment);
                     past_builder.push_back(true);
 
-                    if (std::find(idx_vector.begin(), idx_vector.end(), next_segment) < idx_vector.end()) {
-                        for (int i = next_segment; i < next_segment + ceil(segment_size * merge_threshold / 100); i++) {
-                    
+                    auto test_start = std::find(idx_vector.begin(), idx_vector.end(), next_segment);
+                    auto test_end = idx_vector.end();
+                    if (valid_past) {
+                        for (int i = start_idx; i < start_idx + ceil(segment_size * (merge_threshold / 100)); i++) {
+
                             instance->flags[i].merge_required |= 1;
                         }
-
                     }
-
                 }
+
             }
         }
         
