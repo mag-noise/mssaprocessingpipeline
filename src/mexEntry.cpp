@@ -31,8 +31,8 @@ public:
 				Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize[0], /*Window Size*/windowSize[0]);
 			}
 
-			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
-			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
+			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, 3);
+			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false, 3);
 
 			matlab::data::TypedArray<double> in = std::move(inputs[0]);
 			std::vector<double> dest(in.begin(), in.end());

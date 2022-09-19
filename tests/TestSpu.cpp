@@ -117,8 +117,8 @@ namespace Testing {
                 using namespace std;
                 using namespace SignalProcessingUnit;
                 Processor::MSSA::DynamicVariableSetup(/*Input Size*/10, /*Window Size*/2);
-                MSSAProcessingUnit<double, vector<double>> in_unit = MSSAProcessingUnit<double, vector<double>>(true);
-                MSSAProcessingUnit<double, vector<double>> out_unit = MSSAProcessingUnit<double, vector<double>>(false);
+                MSSAProcessingUnit<double, vector<double>> in_unit = MSSAProcessingUnit<double, vector<double>>(true, 3);
+                MSSAProcessingUnit<double, vector<double>> out_unit = MSSAProcessingUnit<double, vector<double>>(false, 3);
 
                 vector<double> simple(600, 1.0);
                 vector<int> idx = vector<int>();
