@@ -26,7 +26,10 @@ namespace Utils {
 		void SetReduce(std::function<double(int)>);
 		void SetStepper(std::function<double(double, int)>);
 		double ReduceGrad(int idx, int size);
+		double ReduceGrad(int size);
 		void Reset();
+		void Reset(int start, int end);
+
 		double operator[](int idx) {
 			return grads[idx];
 		}
@@ -47,11 +50,22 @@ namespace Utils {
 	/// <param name="size"></param>
 	/// <returns></returns>
 	inline double Gradients::ReduceGrad(int idx, int size) {
-		double used_amount = grads[idx] - (grads[idx] >= 1) * reduce(size) * std::ceil(step);
+		double used_amount = grads[idx] - (grads[idx] >= 1) * reduce(size);// * std::ceil(step);
 		grads[idx] = 1 - used_amount;
 		step = stepper(step, size);
 		return used_amount;
 	}
+
+	/// <summary>
+	/// Obtains value of gradient used, then reduces the remaining gradient by that much
+	/// </summary>
+	/// <param name="idx"></param>
+	/// <param name="size"></param>
+	/// <returns></returns>
+	inline double Gradients::ReduceGrad(int size) {
+		return reduce(size);
+	}
+
 
 	/// <summary>
 	/// Resets gradient to initial values
@@ -60,5 +74,10 @@ namespace Utils {
 	{
 		std::fill(grads.begin(), grads.end(), 1);
 		step = 0;
+	}
+
+	inline void Gradients::Reset(int start, int end)
+	{
+		std::fill(grads.begin() + start, grads.begin() + end, 1);
 	}
 }

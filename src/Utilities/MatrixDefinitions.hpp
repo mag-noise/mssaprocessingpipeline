@@ -30,7 +30,7 @@ namespace Utils{
             uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1, start_of_segment:1, failed_wheel:1;
 
             const bool FlagRaised() {
-                return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value || failed_wheel);
+                return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value);
             }
 
             const bool TimeJumpOnly() {
@@ -279,7 +279,7 @@ namespace Utils{
         /// <param name=""></param>
         /// <param name="segment_size"></param>
         void GetMergesInSegment(std::size_t start_idx, std::size_t segment_size, std::pair<int, int>& idx_pair) {
-            if (instance->flags[start_idx + segment_size - 1].merge_required == 0 || segment_size == 0) {
+            if (segment_size == 0 || instance->flags[start_idx + segment_size - 1].merge_required == 0) {
                 idx_pair.first = -1;
                 idx_pair.second = -1;
                 return;
@@ -287,11 +287,11 @@ namespace Utils{
 
             int i = start_idx + segment_size - 1;
 
-            idx_pair.first = i;
-            while (i >= 0 && instance->flags[i].merge_required) {
+            idx_pair.second = i;
+            while (i >= start_idx && instance->flags[i].merge_required) {
                 i--;
             }
-            idx_pair.second= i + (i < start_idx);
+            idx_pair.first= i + (i < start_idx);
         }
 
         /// <summary>

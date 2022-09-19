@@ -210,14 +210,22 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::ContainerOperation(std::map<char, std::vector<A>>& container, float merge_threshold) {
 		// Empty Values
-		A original = A(flags->Size(), 0);
+		A zeros = A(flags->Size(), 0);
 		std::pair<int, int> start_end(-1, -1);
-		Utils::Gradients gradients(original.size());
+		Utils::Gradients gradients(zeros.size());
 
 		// Static: Sets to use linear reduce. Could be utilized later if gradient reduce should be user defined
-		gradients.SetReduce([](int i) -> double { 
-			double reduced_value = std::abs(1.0 / (double(i - 1) + !(i - 1 <= 0)));
-			if (isinf(reduced_value) || isnan(reduced_value))
+		//gradients.SetReduce([](int i) -> double { 
+		//  // Reduced by size of array group - 1 unless the size == 1. If that is the case, reduced value is full
+		//	double reduced_value = std::abs(1.0 / (double(i - 1) + !(i - 1 <= 0)));
+		//	if (isinf(reduced_value) || isnan(reduced_value))
+		//		return 1.0;
+		//	return reduced_value;
+		//	});
+
+		gradients.SetReduce([](int size_of_group) -> double {
+			double reduced_value = 0.5;
+			if (std::abs(size_of_group) == 0)
 				return 1.0;
 			return reduced_value;
 			});
@@ -228,6 +236,12 @@ namespace SignalProcessingUnit{
 			return double(!(stepping > size) * stepping);
 			});
 
+		/*gradients.SetStepper([this](double step, int size) -> double {
+			return 1;
+			});*/
+
+
+
 		// Go through all values and assign gradient
 		try {
 			for (auto i = 0; i < container['x' * is_xyz + 'a' * !is_xyz].size(); i++) {
@@ -235,7 +249,8 @@ namespace SignalProcessingUnit{
 				for (auto j = 0; j < container['x' * is_xyz + 'a' * !is_xyz][0].size(); j++) {
 					for (auto indx = 'x' * is_xyz + 'a' * !is_xyz; indx <= ('z' * is_xyz + 'a' * !is_xyz); indx++) {
 						int pos = _indices[i] + idx[indx](j);
-						original[pos] = original[pos] + std::move(container[indx][i][j]) * gradients.ReduceGrad(pos, std::ceil(Processor::MSSA::InputSize() * (1 - merge_threshold / 100)));
+						zeros[pos] = zeros[pos] + std::move(container[indx][i][j]) * ((gradients.ReduceGrad(1) * (*flags)[pos].merge_required) + !(*flags)[pos].merge_required);
+						/*gradients.Reset(start_end.first, start_end.second);*/
 					}
 				}
 			}
@@ -243,7 +258,7 @@ namespace SignalProcessingUnit{
 		catch (std::exception const& ex) {
 			throw;
 		}
-		return original;
+		return zeros;
 	}
 #pragma endregion
 

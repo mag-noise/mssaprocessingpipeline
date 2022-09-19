@@ -1,5 +1,6 @@
 #include "../src/MSSA/MSSA.hpp"
 #include "../src/SPU/SPU.hpp"
+#include "../src/Utilities/MatrixDefinitions.hpp"
 
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
@@ -41,7 +42,7 @@ namespace Testing {
                     data_file[1] = u"MGF_20160311_082211_084032_v2.1.0.lv2";
                     data_file[2] = u"MGF_20160311_234614_235232_v2.1.0.lv2";
                     test_matfile = u"C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\data\\2016\\03\\11\\MGF\\";
-                    Processor::MSSA::DynamicVariableSetup(/*Input Size*/25000, /*Window Size*/40);
+                    //Processor::MSSA::DynamicVariableSetup(/*Input Size*/25000, /*Window Size*/40);
                 }
 
                 ~SpuTest() override {
@@ -107,6 +108,46 @@ namespace Testing {
 
 
                 in_unit.LoadFromMatlab(Matfile(1));
+
+
+            }
+
+
+            TEST_F(SpuTest, ContainerMergeTesting) {
+                using namespace std;
+                using namespace SignalProcessingUnit;
+                Processor::MSSA::DynamicVariableSetup(/*Input Size*/10, /*Window Size*/2);
+                MSSAProcessingUnit<double, vector<double>> in_unit = MSSAProcessingUnit<double, vector<double>>(true);
+                MSSAProcessingUnit<double, vector<double>> out_unit = MSSAProcessingUnit<double, vector<double>>(false);
+
+                vector<double> simple(600, 1.0);
+                vector<int> idx = vector<int>();
+                simple[57] = nan("-ind");
+
+                //for (auto i = 90; i < 90 + 30; i++) {
+                //    simple[i] = 2;
+                //}
+
+                Utils::FlagSystem::GetInstance()->Resize(simple.size());
+                Utils::FlagSystem::GetInstance()->FlagNaN(simple);
+
+                in_unit.PreProcess(simple, true);
+                out_unit.PreProcess(simple, true);
+                MSSAProcessingUnit<double, vector<double>>::Process(in_unit, out_unit);
+
+                in_unit.JoinWheel();
+                out_unit.JoinWheel();
+
+
+                for (auto i = 90; i < 90 + 30; i++) {
+                    (*Utils::FlagSystem::GetInstance())[i].failed_wheel = 1;
+                }
+
+
+                auto changed = in_unit.JoinSignal(simple);
+                auto original = out_unit.JoinSignal(simple);
+
+                EXPECT_NE(0, 1);
 
 
             }
