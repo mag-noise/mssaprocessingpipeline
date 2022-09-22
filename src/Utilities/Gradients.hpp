@@ -51,8 +51,8 @@ namespace Utils {
 	/// <returns></returns>
 	inline double Gradients::ReduceGrad(int idx, int size) {
 		double reduce_amount = reduce(size);
-		double used_amount = grads[idx] - (grads[idx] >= 1) * reduce(size) *std::round(step);
-		grads[idx] = 1.0 - used_amount;
+		double used_amount = grads[idx] - (grads[idx] >= 1) * reduce(size) * std::round(step);
+		grads[idx] = 1.0 - used_amount + (used_amount==0.0);
 		step = stepper(step, idx, size);
 		return used_amount;
 	}
