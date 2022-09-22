@@ -16,7 +16,7 @@ namespace Utils {
 	private:
 		std::vector<double> grads;
 		std::function<double(int)> reduce;
-		std::function<double(double, int)> stepper;
+		std::function<double(double, int, int)> stepper;
 		double step;
 	public:
 		Gradients(std::size_t init_size) {
@@ -24,7 +24,7 @@ namespace Utils {
 			step = 0;
 		}
 		void SetReduce(std::function<double(int)>);
-		void SetStepper(std::function<double(double, int)>);
+		void SetStepper(std::function<double(double, int, int)>);
 		double ReduceGrad(int idx, int size);
 		double ReduceGrad(int size);
 		void Reset();
@@ -39,8 +39,8 @@ namespace Utils {
 		reduce=a;
 	}
 
-	inline void Gradients::SetStepper(std::function<double(double, int)> a) {
-		stepper =a;
+	inline void Gradients::SetStepper(std::function<double(double, int, int)> a) {
+		stepper = a;
 	}
 
 	/// <summary>
@@ -50,9 +50,10 @@ namespace Utils {
 	/// <param name="size"></param>
 	/// <returns></returns>
 	inline double Gradients::ReduceGrad(int idx, int size) {
-		double used_amount = grads[idx] - (grads[idx] >= 1) * reduce(size);// * std::ceil(step);
-		grads[idx] = 1 - used_amount;
-		step = stepper(step, size);
+		double reduce_amount = reduce(size);
+		double used_amount = grads[idx] - (grads[idx] >= 1) * reduce(size) *std::round(step);
+		grads[idx] = 1.0 - used_amount;
+		step = stepper(step, idx, size);
 		return used_amount;
 	}
 
