@@ -42,7 +42,7 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
     parse(p, inboard, outboard, timestamp, varargin{:});
 
     if(p.Results.build)
-        build_mex(p.Results.vcpkgDir);
+        mssa.build_mex(p.Results.vcpkgDir);
     end
     %addpath('release/mssa');
     mh = mexhost;

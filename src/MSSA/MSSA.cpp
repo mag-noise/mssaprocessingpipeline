@@ -241,7 +241,7 @@ namespace Processor{
         for (int i = 0; i < recon.cols(); i++) {
             try {
                 auto check = abs(CorrelationCoefficient(recon.col(i), interference));
-                if (1.0-check > alpha) {
+                if (check > alpha) {
                     indexList.push_back(i);
                 }
             }

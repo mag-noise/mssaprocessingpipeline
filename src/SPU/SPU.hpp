@@ -254,7 +254,7 @@ namespace SignalProcessingUnit{
 
 		// Stepper set to use correct equation based on xyz or not. Stepper resets to 0 after passing size;
 		gradients.SetStepper([this](double step, int counter, int size) -> double {
-			if (counter % _dimensions == 2) {
+			if (counter % _dimensions == _dimensions-1) {
 				double stepping = (step + 1.0);
 				return double(!(stepping >= size) * stepping);
 			}

@@ -46,7 +46,7 @@ function import_data(data_location, debug, only_path)
     
     
         else
-            format_cdf(data_location);
+            mssa.format_cdf(data_location);
         end
     end
     if(debug > -1)
