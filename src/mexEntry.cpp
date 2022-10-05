@@ -23,16 +23,20 @@ public:
 		checkArguments(outputs, inputs, matlabPtr, factory);
 		
 		try {
-
-			if (inputs.size() > 4)
+			unsigned int dimensions = 3;
+			if (inputs.size() > 3) {
+				matlab::data::TypedArray<double> dimen = std::move(inputs[3]);
+				dimensions = std::round(dimen[0]);
+			}
+			if (inputs.size() > 5)
 			{
-				matlab::data::TypedArray<double> inputSize = std::move(inputs[4]);
-				matlab::data::TypedArray<double> windowSize = std::move(inputs[5]);
+				matlab::data::TypedArray<double> inputSize = std::move(inputs[5]);
+				matlab::data::TypedArray<double> windowSize = std::move(inputs[6]);
 				Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize[0], /*Window Size*/windowSize[0]);
 			}
 
-			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true);
-			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false);
+			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);
+			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false, dimensions);
 
 			matlab::data::TypedArray<double> in = std::move(inputs[0]);
 			std::vector<double> dest(in.begin(), in.end());
@@ -61,27 +65,29 @@ public:
 			outboard.PreProcess(dest2, true);
 		
 			double alpha_val = 0.05;
-			if (inputs.size() > 3) {
-				matlab::data::TypedArray<double> alpha = std::move(inputs[3]);
+			if (inputs.size() > 4) {
+				matlab::data::TypedArray<double> alpha = std::move(inputs[4]);
 				alpha_val = alpha[0];
 			}
 			MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 
-			auto temp = inboard.JoinSignal(dest);
-			outputs[0] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
-
-			temp = outboard.JoinSignal(dest2);
-			outputs[1] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
-
-			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
-			outputs[2] = factory.createArray({ 3, temp2.size() / 3 }, temp2.begin(), temp2.end());
-
+			// Due to how the failed_wheel is found in the program, this ensures that the flag is correctly raised prior 
+			// to committing joined containers
+			auto temp = outboard.JoinWheel();
 			temp = inboard.JoinWheel();
-			outputs[3] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
+			outputs[3] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
 
 			temp = outboard.JoinWheel();
-			outputs[4] = factory.createArray({ 3, temp.size() / 3 }, temp.begin(), temp.end());
+			outputs[4] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
 
+			temp = inboard.JoinSignal(dest);
+			outputs[0] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
+
+			temp = outboard.JoinSignal(dest2);
+			outputs[1] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
+
+			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
+			outputs[2] = factory.createArray({ dimensions, temp2.size() / dimensions }, temp2.begin(), temp2.end());
 
 		}
 		catch (const matlab::engine::MATLABException& ex) {

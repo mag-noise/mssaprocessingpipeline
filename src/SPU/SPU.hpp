@@ -32,7 +32,7 @@ namespace SignalProcessingUnit{
 	class MSSAProcessingUnit {
 	private:
 
-		bool is_xyz = true;
+		int _dimensions = 3;
 		bool is_inboard;
 		std::map<char, std::vector<A>> _segmented_signal_container;
 		std::map<char, std::vector<A>> _wheel_container;
@@ -41,7 +41,7 @@ namespace SignalProcessingUnit{
 		void SegmentIndices(A& container, std::function<int(int)> indexer);
 		void SetupContainer(A data_to_load, pair<char, char> start_end, std::map<char, std::vector<A>>& container);
 		A JoinContainer(A original, std::map<char, std::vector<A>>&);
-		A ContainerOperation(std::map<char, std::vector<A>>& container);
+		A ContainerOperation(std::map<char, std::vector<A>>& container, float merge_threshold=0);
 		void BuildSignalContainer(Processor::MSSA::ReconstructionMatrix mat, std::vector<int> iarrOfIndices, char mapping, int index, std::map<char, std::vector<A>> &container);
 
 	public:
@@ -53,12 +53,27 @@ namespace SignalProcessingUnit{
 			_wheel_container = map<char, std::vector<A>>();
 
 			idx = map<char, std::function<int(int)>>();
-			idx['x'] = [](int a) {return a * 3; };
-			idx['y'] = [](int a) {return a * 3 + 1; };
-			idx['z'] = [](int a) {return a * 3 + 2; };
-			idx['a'] = [](int a) {return a; };
+			for (char i = 'a'; i < 'a' + 3; i++) {
+				int j = (i - 'a');
+				idx[i] = [j](int a) {return a * 3 + j; };
+			}
+
 			is_inboard = board;
 		}
+
+		MSSAProcessingUnit(bool board, int dimensions) {
+			_segmented_signal_container = map<char, std::vector<A>>();
+			_wheel_container = map<char, std::vector<A>>();
+			_dimensions = dimensions;
+
+			idx = map<char, std::function<int(int)>>();
+			for (char i = 'a'; i < 'a' + dimensions; i++) {
+				int j = (i - 'a');
+				idx[i] = [j, dimensions](int a) {return a * dimensions + j; };
+			}
+
+			is_inboard = board;
+	}
 
 #ifdef _MAT_
 		int LoadFromMatlab(std::u16string input_file);
@@ -74,6 +89,7 @@ namespace SignalProcessingUnit{
 		std::vector<A> operator[](char);
 		std::size_t size();
 		std::pair<int, int> SegmentIndices(int);
+		int GetDimensions();
 	};
 
 	using SignalProcessingUnit::MSSAProcessingUnit;
@@ -96,7 +112,12 @@ namespace SignalProcessingUnit{
 		// TODO: Extend flagging to look backwards for a potentially valid segment. Remake function call to be recursive?
 
 		// Creates the index for the starting point of each segment
-		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * (indexer(1) / 3 * 2 + 1), _indices);
+		flags->FindFlagInSegment(0, Processor::MSSA::InputSize() * _dimensions, _indices, false, 50);
+
+		//std::for_each(result1.begin() + (result1.getDimensions()[0] * axes[axis]), (result1.end() * axes[axis] / 3), [result1](double val) {cout << val;});
+		for (auto idx : _indices) {
+			flags->FlagSegmentStart(idx, _dimensions);
+		}
 
 	}
 
@@ -161,9 +182,12 @@ namespace SignalProcessingUnit{
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinContainer(A original, std::map<char, std::vector<A>>& container) {
 		try {
+			float merge_threshold = 50;
 			// INITIALIZE TO ORIGINAL VALUES
-			if (original.size() == 0)
-				original = A(flags->Size(), nan("-ind"));
+			if (original.size() == 0) {
+				original = A(flags->Size(), 0);
+				merge_threshold = 100;
+			}
 			// Interesting solution to efficient concatenation of vectors:
 			// https://stackoverflow.com/questions/3177241/what-is-the-best-way-to-concatenate-two-vectors
 			/*output.reserve(_segmented_signal_container['x'].size() * Processor::MSSA::input_size * 3);
@@ -174,12 +198,13 @@ namespace SignalProcessingUnit{
 				std::for_each(_segmented_signal_container[idx].begin(), _segmented_signal_container[idx].end(), lam);
 			}*/
 
-			A reconstruction = ContainerOperation(container);
+			A reconstruction = ContainerOperation(container, merge_threshold);
 
 			for (int i = 0; i < original.size(); i++) {
 				if (!(*flags)[i].FlagRaised()) {
 					original[i] = (reconstruction[i] * !(*flags)[i].FlagRaised());
 				}
+
 			}
 			return original;
 		}
@@ -199,34 +224,64 @@ namespace SignalProcessingUnit{
 	/// <param name="container"></param>
 	/// <returns></returns>
 	template<typename T, typename A>
-	inline A MSSAProcessingUnit<T, A>::ContainerOperation(std::map<char, std::vector<A>>& container) {
+	inline A MSSAProcessingUnit<T, A>::ContainerOperation(std::map<char, std::vector<A>>& container, float merge_threshold) {
 		// Empty Values
-		A original = A(flags->Size(), 0);
+		A zeros = A(flags->Size(), 0);
 		std::pair<int, int> start_end(-1, -1);
-		Utils::Gradients gradients(original.size());
+		Utils::Gradients gradients(zeros.size());
 
 		// Static: Sets to use linear reduce. Could be utilized later if gradient reduce should be user defined
 		gradients.SetReduce([](int i) -> double { 
-			double reduced_value = std::abs(1.0 / (double(i - 1) + !(i - 1 <= 0)));
+		  // Reduced by size of array group - 1 unless the size == 1. If that is the case, reduced value is full
+			double reduced_value = std::abs(1.0 / (double(i - 1) + (i - 1 <= 0)));
 			if (isinf(reduced_value) || isnan(reduced_value))
 				return 1.0;
 			return reduced_value;
 			});
 
+		//gradients.SetReduce([](int size_of_group) -> double {
+		//	double reduced_value = 0.5;
+		//	if (std::abs(size_of_group) == 0)
+		//		return 1.0;
+		//	return reduced_value;
+		//	});
+
 		// Stepper set to use correct equation based on xyz or not. Stepper resets to 0 after passing size;
-		gradients.SetStepper([this](double step, int size) -> double {
-			double stepping = (step + 1.0 / 3.0 * is_xyz + !is_xyz);
-			return double(!(stepping > size) * stepping);
+		//gradients.SetStepper([this](double step, int counter, int size) -> double {
+		//	double stepping = (step + 1.0 / _dimensions);
+		//	return double(!(stepping > size) * stepping);
+		//	});
+
+		// Stepper set to use correct equation based on xyz or not. Stepper resets to 0 after passing size;
+		gradients.SetStepper([this](double step, int counter, int size) -> double {
+			if (counter % _dimensions == _dimensions-1) {
+				double stepping = (step + 1.0);
+				return double(!(stepping >= size) * stepping);
+			}
+			return step;
 			});
 
-		// Go through all values and assign gradient
+
+		/*gradients.SetStepper([this](double step, int size) -> double {
+			return 1;
+			});*/
+
+
+
+			// Go through all values and assign gradient
 		try {
-			for (auto i = 0; i < container['x' * is_xyz + 'a' * !is_xyz].size(); i++) {
-				flags->GetMergesInSegment(_indices[i], Processor::MSSA::InputSize(), start_end);
-				for (auto j = 0; j < container['x' * is_xyz + 'a' * !is_xyz][0].size(); j++) {
-					for (auto indx = 'x' * is_xyz + 'a' * !is_xyz; indx <= ('z' * is_xyz + 'a' * !is_xyz); indx++) {
+			for (auto i = 0; i < container['a'].size(); i++) {
+				//flags->GetMergesInSegment(_indices[i], std::ceil(Processor::MSSA::InputSize() * (1-merge_threshold/100)), start_end);
+				
+				for (auto j = 0; j < container['a'][0].size(); j++) {
+					for (auto indx = 'a'; indx < ('a' + _dimensions); indx++) {
 						int pos = _indices[i] + idx[indx](j);
-						original[pos] = original[pos] + std::move(container[indx][i][j]) * gradients.ReduceGrad(pos, start_end.second - start_end.first);
+						zeros[pos] = zeros[pos] + 
+							std::move(container[indx][i][j]) * 
+							((gradients.ReduceGrad(pos, std::ceil(Processor::MSSA::InputSize() * (1.0 - merge_threshold / 100))) * 
+								(*flags)[pos].merge_required) + 
+								!(*flags)[pos].merge_required);
+						/*gradients.Reset(start_end.first, start_end.second);*/
 					}
 				}
 			}
@@ -234,7 +289,7 @@ namespace SignalProcessingUnit{
 		catch (std::exception const& ex) {
 			throw;
 		}
-		return original;
+		return zeros;
 	}
 #pragma endregion
 
@@ -262,7 +317,7 @@ namespace SignalProcessingUnit{
 				}
 			}
 		}
-		is_xyz = false;
+		_dimensions = false;
 
 		// Generate flag vector
 		flags->Resize(output_container.size());
@@ -367,10 +422,10 @@ namespace SignalProcessingUnit{
 			flags->Resize(data_to_load.size());
 
 		// Obtain all segment indices
-		SegmentIndices(data_to_load, idx['a'*!xyz + 'x'*xyz]);
+		SegmentIndices(data_to_load, idx['a']);
 
 		// Setup containers to have original values
-		pair<char, char> start_end('a' * !xyz + 'x' * xyz, 'a' * !xyz + 'z' * xyz);
+		pair<char, char> start_end('a', 'a' + _dimensions-1);
 		SetupContainer(data_to_load, start_end, _segmented_signal_container);
 		SetupContainer(data_to_load, start_end, _wheel_container);
 	}
@@ -464,8 +519,11 @@ namespace SignalProcessingUnit{
 		using Processor::MSSA;
 		using Eigen::Dense;
 
+		if (inboard.GetDimensions() != outboard.GetDimensions())
+			return;
+
 		// TODO: Make work for both XYZ and non-XYZ
-		for (char vec = 'x'; vec <= 'z'; vec++) {
+		for (char vec = 'a'; vec < 'a' + inboard.GetDimensions(); vec++) {
 			for(int idx = 0; idx < inboard.size(); idx++){
 				try {
 					MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
@@ -506,10 +564,10 @@ namespace SignalProcessingUnit{
 					//for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
 					//std::cout << std::endl;
 					break;
-#endif // _DEBUG
+	#endif // _DEBUG
 				}
 				catch(std::exception const& ex) {
-					Utils::FlagSystem::GetInstance()->FlagSegment(idx, MSSA::InputSize()*3);
+					Utils::FlagSystem::GetInstance()->FlagSegment(idx, MSSA::InputSize() * inboard.GetDimensions());
 
 					//std::string error_message = "";
 					//error_message.append(ex.what());
@@ -548,10 +606,19 @@ namespace SignalProcessingUnit{
 	/// <returns></returns>
 	template<typename T, typename A>
 	inline A MSSAProcessingUnit<T, A>::JoinWheel() {
-		return JoinContainer(A(0), _wheel_container);
+		auto reconstruction = JoinContainer(A(0), _wheel_container);
+		for (auto i = 0; i < reconstruction.size(); i++) {
+			if (reconstruction[i] == 0) {
+				flags->FlagWheelSegmentIdx(i);
+			}
+		}
+		return reconstruction;
 	}
 
-	
+	template<typename T, typename A>
+	inline int MSSAProcessingUnit<T, A>::GetDimensions() {
+		return this->_dimensions;
+	}
 
 
 }

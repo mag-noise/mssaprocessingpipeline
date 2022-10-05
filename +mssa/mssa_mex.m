@@ -33,6 +33,7 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
     addParameter(p, 'segment', 5000, @isnumeric);
     addParameter(p, 'window', 40, checkWindow);
     addParameter(p, 'alpha', 0.05, checkAlpha);
+    addParameter(p, 'dimensions', 3, @isnumeric);
     addParameter(p, 'isInboard', true, @islogical);
     addParameter(p, 'xyz', 'x', checkPlot);
     addParameter(p, 'plotting', false, @islogical);
@@ -41,7 +42,7 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
     parse(p, inboard, outboard, timestamp, varargin{:});
 
     if(p.Results.build)
-        build_mex(p.Results.vcpkgDir);
+        mssa.build_mex(p.Results.vcpkgDir);
     end
     %addpath('release/mssa');
     mh = mexhost;
@@ -50,9 +51,10 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
     % threshold, segment size, window size)
     [in_result, out_result, flags, in_wheel, out_wheel] = ...
         feval(mh, 'MSSAMex', inboard, outboard, timestamp, ...
-        p.Results.alpha, p.Results.segment, p.Results.window);
+        p.Results.dimensions, p.Results.alpha, p.Results.segment, p.Results.window);
 
     time = clock - time;
+    disp("Time:");
     disp(time);
 
     plottingDisplay = in_result;
