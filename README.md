@@ -19,13 +19,24 @@ mh = mexhost;
 Function inputs are as ordered in the following manner:
 1. inboard_input: 3D magnetic field data in 3xN double value format
 2. outboard_input: 3D magnetic field data in 3xN double value format
-3. alpha_threshold: Value between [0, 1] used to select components for reconstruction
-4. segment_size: Size of the N magnetic field data points to use as for each analysis cycle. If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments (exludes last segment)
-5. window_size: Size of the window used by MSSA when deconstructing signal.
+3. timeline: 1D matrix of datetime values representing the time the magnetic field data record was recorded
+4. dimensions: N in the NxM matrix provided to MSSAMex. Default to 3
+5. alpha_threshold: Value between [0, 1] used to select components for reconstruction
+6. segment_size: Size of the N magnetic field data points to use as for each analysis cycle. If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments (exludes last segment)
+7. window_size: Size of the window used by MSSA when deconstructing signal.
 
 Function outputs are ordered as follows:
 1. inboard_result: Reconstructed 3D magnetic field data representing the Inboard data
 2. outboard_result: Reconstructed 3D magnetic field data representing the Outboard data
+3. flags: Status flags for analysis of MSSA. Flags currently in format of
+		a. Segment Start: value is the start of a new segment
+		b. Merged: value has been marked as being merged between 2 segments separately running MSSA
+		c. Skipped: value will be equal to the original input signal
+		d. Time Jump: value represents the start of a new segment due to a discontinuity in the timeline
+		e. NaN: value has been registered as a NaN
+		f. Wheel Error: value has not had the wheel removed. Affects all values of a segment
+4. wheel_inboard: Wheel of inboard signal
+5. wheel_outboard: Wheel of outboard signal
 
 # Compilation Setup
 ## Requirements (Windows & Linux)
