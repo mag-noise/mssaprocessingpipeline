@@ -47,6 +47,7 @@ Function outputs are ordered as follows:
  - CMake (3.15 minimum)
    - Windows: [Download](https://cmake.org/download/)
    - Linux: `sudo apt-get install cmake` or `sudo apt-get install cmake-build`
+    - If unable to get 3.15 via apt-get, follow the instructions [here](https://cmake.org/install/)
  - VCPKG (C++ Package manager)
    - Getting Started via Cloning: [Here](https://vcpkg.io/en/getting-started.html)
  - Matlab installation (Tested on R2022a)
