@@ -47,12 +47,14 @@ Function outputs are ordered as follows:
  - CMake (3.15 minimum)
    - Windows: [Download](https://cmake.org/download/)
    - Linux: `sudo apt-get install cmake` or `sudo apt-get install cmake-build`
-    - If unable to get 3.15 via apt-get, follow the instructions [here](https://cmake.org/install/)
+      - If unable to get 3.15 via apt-get, follow the instructions [here](https://cmake.org/install/)
  - VCPKG (C++ Package manager)
    - Getting Started via Cloning: [Here](https://vcpkg.io/en/getting-started.html)
  - Matlab installation (Tested on R2022a)
  - Ninja Build (Usually comes with CMake)
    - If needed on linux: `sudo apt-get install ninja-build`
+ - Linux Only:
+   - pkg-config: sudo apt-get install pkg-config
 
 ## MacOS Setup
 With MacOSX (and consequently UNIX systems), it is possible to skip the need for VcPkg installation, as Eigen is downloadable by Homebrew. Matlab is still required for compilation of Mex function.
@@ -60,10 +62,14 @@ With MacOSX (and consequently UNIX systems), it is possible to skip the need for
 ## Building
 There are 3 options for running CMake:
  - Set VCPKG_ROOT environment variable
+    - example: `cmake -B build -S .`
  - Set VCPKG_ROOT as a command line input
     - example: `cmake -B build -S . -DVCPKG_ROOT=[vcpkg location]`
  - Set CMAKE_TOOLCHAIN_FILE as a command line input
     - `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake`
+
+If you are having issues finding Matlab, set the CMake variable Matlab_ROOT.
+ - example: `cmake -B build -S . -DMatlab_ROOT=[Matlab location]`
 
 CMake should install all packages needed, but if not run: `%VCPKG_ROOT%\vcpkg install`
 
