@@ -73,7 +73,8 @@ If you are having issues finding Matlab, set the CMake variable Matlab_ROOT.
 
 CMake should install all packages needed, but if not run: `%VCPKG_ROOT%\vcpkg install`
 
-After creating build directory, build and compile the application
+After creating build directory, make release folder, then build and compile the application
+ - `mkdir release`
  - `cmake --build \build`
 
 The built executable will be within the `build/*/mssa` folder. If in release mode, it will also zip the compiled code into the %Project_Source%/release folder.
