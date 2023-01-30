@@ -84,6 +84,7 @@ namespace SignalProcessingUnit{
 		void SetSegmentedValues(char index, double seg_index, T value);
 		void BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::vector<int> iarrOfIndices, char mapping, int index);
 		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.05, int num_of_threads = 1);
+		void CheckSignalDifference(A signal, A wheel, A original);
 		A JoinSignal(A original = A());
 		A JoinWheel();
 		std::vector<A> operator[](char);
@@ -581,6 +582,23 @@ namespace SignalProcessingUnit{
 
 					//throw std::exception(error_message.c_str());
 				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// Public interface to join reconstructed signal. Requires original signal, or a filler signal.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="A"></typeparam>
+	/// <param name="signal"></param>
+	/// <param name="wheel"></param>
+	/// <returns></returns>
+	template<typename T, typename A>
+	void MSSAProcessingUnit<T, A>::CheckSignalDifference(A signal, A wheel, A original) {
+		for (auto i = 0; i < signal.size(); i++) {
+			if (abs(signal[i] - original[i]) > abs(wheel[i] - original[i])) {
+				flags->FlagFlippedSegmentIdx(i);
 			}
 		}
 	}

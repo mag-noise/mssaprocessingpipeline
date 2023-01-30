@@ -74,17 +74,19 @@ public:
 			// Due to how the failed_wheel is found in the program, this ensures that the flag is correctly raised prior 
 			// to committing joined containers
 			auto temp = outboard.JoinWheel();
-			temp = inboard.JoinWheel();
-			outputs[3] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
+			auto wheel = inboard.JoinWheel();
+			outputs[3] = factory.createArray({ dimensions, wheel.size() / dimensions }, wheel.begin(), wheel.end());
 
 			temp = outboard.JoinWheel();
 			outputs[4] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
 
-			temp = inboard.JoinSignal(dest);
-			outputs[0] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
+			auto signal = inboard.JoinSignal(dest);
+			outputs[0] = factory.createArray({ dimensions, signal.size() / dimensions }, signal.begin(), signal.end());
+			inboard.CheckSignalDifference(signal, wheel, dest);
 
-			temp = outboard.JoinSignal(dest2);
-			outputs[1] = factory.createArray({ dimensions, temp.size() / dimensions }, temp.begin(), temp.end());
+			signal = outboard.JoinSignal(dest2);
+			outputs[1] = factory.createArray({ dimensions, signal.size() / dimensions }, signal.begin(), signal.end());
+			outboard.CheckSignalDifference(signal, temp, dest2);
 
 			std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
 			outputs[2] = factory.createArray({ dimensions, temp2.size() / dimensions }, temp2.begin(), temp2.end());
