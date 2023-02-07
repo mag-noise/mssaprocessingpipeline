@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm> // for copy() and assign() 
+#include <iterator> // for back_inserter 
 
 #include "mex.hpp"
 #include "mexAdapter.hpp"
@@ -64,10 +66,11 @@ public:
 			inboard.PreProcess(dest, true);
 			outboard.PreProcess(dest2, true);
 		
-			double alpha_val = 0.05;
+			std::vector<double> alpha_val = { 0.05 };
 			if (inputs.size() > 4) {
 				matlab::data::TypedArray<double> alpha = std::move(inputs[4]);
-				alpha_val = alpha[0];
+				alpha_val.clear();
+				copy(alpha.begin(), alpha.end(), back_inserter(alpha_val));
 			}
 			MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 

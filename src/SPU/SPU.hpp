@@ -83,7 +83,7 @@ namespace SignalProcessingUnit{
 		void PreProcess(A data_to_load, bool xyz = false);
 		void SetSegmentedValues(char index, double seg_index, T value);
 		void BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::vector<int> iarrOfIndices, char mapping, int index);
-		void static Process(MSSAProcessingUnit &inboard, MSSAProcessingUnit &outboard, double alpha = 0.05, int num_of_threads = 1);
+		void static Process(MSSAProcessingUnit& inboard, MSSAProcessingUnit& outboard, std::vector<double> alpha = { 0.05 }, int num_of_threads = 1);
 		void CheckSignalDifference(A signal, A wheel, A original);
 		A JoinSignal(A original = A());
 		A JoinWheel();
@@ -516,7 +516,7 @@ namespace SignalProcessingUnit{
 	/// <param name="inboard"></param>
 	/// <param name="outboard"></param>
 	template<typename T, typename A>
-	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, double alpha, int num_of_threads) {
+	inline void MSSAProcessingUnit<T,A>::Process(MSSAProcessingUnit<T,A> &inboard, MSSAProcessingUnit<T,A> &outboard, std::vector<double> alpha, int num_of_threads) {
 		using Processor::MSSA;
 		using Eigen::Dense;
 
@@ -543,7 +543,7 @@ namespace SignalProcessingUnit{
 					}
 					MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
 	#endif
-					auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha);
+					auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha[(vec % 'a')%alpha.size()]);
 					inboard.BuildSignal(mat, componentList, vec, idx);
 					outboard.BuildSignal(mat, componentList, vec, idx);
 	#ifdef _TEST
