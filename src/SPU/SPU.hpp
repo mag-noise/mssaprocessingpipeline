@@ -492,9 +492,9 @@ namespace SignalProcessingUnit{
 	inline void MSSAProcessingUnit<T, A>::BuildSignal(Processor::MSSA::ReconstructionMatrix mat, std::vector<int> iarrOfIndices, char mapping, int index)
 	{
 		// Build main signal
-		BuildSignalContainer(mat, iarrOfIndices, mapping, index, _segmented_signal_container);
+		BuildSignalContainer(mat, iarrOfIndices, mapping, index, _wheel_container);
 		
-		// Build Wheel (error signal)
+		// Build Wheel (error signal) with the remaining indices
 		std::vector<int> allIndices(mat.cols());
 		int i = 0;
 		std::sort(iarrOfIndices.begin(), iarrOfIndices.end());
@@ -503,7 +503,7 @@ namespace SignalProcessingUnit{
 		std::set_difference(allIndices.begin(), allIndices.end(), iarrOfIndices.begin(), iarrOfIndices.end(),
 			std::back_inserter(diff));
 
-		BuildSignalContainer(mat, diff, mapping, index, _wheel_container);
+		BuildSignalContainer(mat, diff, mapping, index, _segmented_signal_container);
 
 	}
 

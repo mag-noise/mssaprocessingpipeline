@@ -30,17 +30,19 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
     addRequired(p, 'timestamp', checkTime);
     addParameter(p,'build', false, @islogical);
     addParameter(p, 'vcpkgDir', DefaultVcpkg, checkBuild);
-    addParameter(p, 'segment', 5000, @isnumeric);
-    addParameter(p, 'window', 40, checkWindow);
-    addParameter(p, 'alpha', 0.05, checkAlpha);
+    addParameter(p, 'segment', 0, @isnumeric);
+    addParameter(p, 'window', 40);
+    addParameter(p, 'alpha', 0.05);
     addParameter(p, 'dimensions', 3, @isnumeric);
     addParameter(p, 'isInboard', true, @islogical);
     addParameter(p, 'xyz', 'x', checkPlot);
     addParameter(p, 'plotting', false, @islogical);
 
-    
     parse(p, inboard, outboard, timestamp, varargin{:});
-
+    segment = p.Results.segment;
+    if(segment == 0)
+        segment = length(timestamp);
+    end
     if(p.Results.build)
         mssa.build_mex(p.Results.vcpkgDir);
     end
@@ -51,7 +53,7 @@ function [in_result, out_result, flags, in_wheel, out_wheel, time]=mssa_mex(inbo
     % threshold, segment size, window size)
     [in_result, out_result, flags, in_wheel, out_wheel] = ...
         feval(mh, 'MSSAMex', inboard, outboard, timestamp, ...
-        p.Results.dimensions, p.Results.alpha, p.Results.segment, p.Results.window);
+        p.Results.dimensions, p.Results.alpha, segment, p.Results.window);
 
     time = clock - time;
     disp("Time:");

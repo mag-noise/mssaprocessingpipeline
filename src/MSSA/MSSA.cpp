@@ -215,7 +215,7 @@ namespace Processor{
         double y_m = y.mean();
         x.array() -= x_m;
         y.array() -= y_m;
-        double val2 = (sqrt((x.array() * x.array()).sum()) * sqrt((y.array() * y.array()).sum())); 
+        double val2 = sqrt(((x.array() * x.array()).sum()) * ((y.array() * y.array()).sum()));
         if (std::isnan(val2) || val2 == 0)
             return 0;
 
@@ -238,12 +238,22 @@ namespace Processor{
         MatrixXd interference = x-y;
 
         std::vector<int> indexList = std::vector<int>();
+        std::vector<double> listOfCheckValues = std::vector<double>();
+        //std::vector<double> listOfCheckValuesX = std::vector<double>();
+        //std::vector<double> listOfCheckValuesY = std::vector<double>();
+
         for (int i = 0; i < recon.cols(); i++) {
             try {
-                auto check = abs(CorrelationCoefficient(recon.col(i), interference));
-                if (check > alpha) {
+                auto check = CorrelationCoefficient(recon.col(i), interference);
+                auto checkX = CorrelationCoefficient(recon.col(i), x);
+                auto checkY = CorrelationCoefficient(recon.col(i), y);
+                if ((abs(check) > alpha && abs(check) > abs(checkX) && abs(check) > abs(checkY))||
+                    (abs(abs(check) - abs(checkX)) < alpha) || abs(abs(check) - abs(checkY)) < alpha) {
                     indexList.push_back(i);
                 }
+                listOfCheckValues.push_back(check);
+                //listOfCheckValuesX.push_back(checkX);
+                //listOfCheckValuesY.push_back(checkY);
             }
             catch (std::exception const& ex) {
                 std::string error_message = "";
@@ -254,6 +264,7 @@ namespace Processor{
             }
 
         }
+        //indexList = { 0, 1, 40, 41 };
         return indexList;
     }
 
