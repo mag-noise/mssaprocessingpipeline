@@ -37,10 +37,11 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-project(MSSAProcessingPipeline VERSION 1.1.0)
+project(MSSAProcessingPipeline VERSION 1.2.0)
 file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.hpp)
 
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp)
+list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/src/pyEntry.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${file_search})
 target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
@@ -63,6 +64,7 @@ if(Matlab_FOUND)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Matlab::MatlabEngine Matlab::MatlabDataArray)
     matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx DOCUMENTATION ${PROJECT_SOURCE_DIR}/docs/MSSAMex.txt)    
 endif()
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     message("Debug Mode")	
     enable_testing()
@@ -79,4 +81,24 @@ elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
                     -DEIGEN3_INCLUDE_DIRS=${EIGEN3_INCLUDE_DIRS}/Eigen
                     -P ${PROJECT_SOURCE_DIR}/zipfiles.cmake
     )
+endif()
+
+project(MSSAPython 
+        VERSION 0.1.0
+        LANGUAGES CXX)
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+if(Python_FOUND)
+    find_package(pybind11 CONFIG REQUIRED)
+    # Add a library using FindPython's tooling (pybind11 also provides a helper like
+    # this)
+    python_add_library(MSSAPython MODULE src/pyEntry.cpp WITH_SOABI)
+    target_link_libraries(MSSAPython PRIVATE pybind11::headers)
+
+    # This is passing in the version as a define just as an example
+    target_compile_definitions(MSSAPython PRIVATE VERSION_INFO=${PROJECT_VERSION})
+
+    # The install directory is the output (wheel) directory
+    install(TARGETS MSSAPython DESTINATION MSSAPython)
+    message("Installed Python Library")
+
 endif()
