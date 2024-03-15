@@ -55,3 +55,11 @@
 # Matfiles to ignore
 /*.mexw64
 *.asv
+/*.m
+
+# Ignore matfiles now in +mssa
+!/+mssa/*.m
+
+# Ignore docs that are not finished
+/docs/*.drawio*
+/docs/*.txt
