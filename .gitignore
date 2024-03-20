@@ -63,3 +63,7 @@
 # Ignore docs that are not finished
 /docs/*.drawio*
 /docs/*.txt
+
+# Others
+*.log
+*.pdb
