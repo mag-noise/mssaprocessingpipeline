@@ -182,9 +182,9 @@ PYBIND11_MODULE(MSSAPython, m) {
         Some other explanation about the add function.
     )pbdoc");
 
-#ifdef VERSION_INFO
-	m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
-#else
+//#ifdef VERSION_INFO
+//	m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+//#else
 	m.attr("__version__") = "dev";
-#endif
+//#endif
 }

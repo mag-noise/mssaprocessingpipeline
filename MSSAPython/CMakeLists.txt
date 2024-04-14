@@ -1,6 +1,4 @@
-project(MSSAPython 
-        VERSION 0.1.0
-        LANGUAGES CXX)
+project(MSSAPython LANGUAGES CXX)
 
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -11,10 +9,15 @@ elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
     message("Release Mode")
     set(SKBUILD_CMAKE_BUILD_TYPE Release)
 endif()
-
+set(Python3_ROOT_DIR "C:\\Users\\klsteele\\.pyenv\\pyenv-win\\versions\\3.11.5\\")
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+set(Python3_ROOT_DIR "C:\\Users\\klsteele\\.pyenv\\pyenv-win\\versions\\3.11.5\\")
+set(Python3_INCLUDE_DIR "C:\\Users\\klsteele\\.pyenv\\pyenv-win\\versions\\3.11.5\\include")
 if(Python_FOUND)
-    message("${Python_LIBRARY_DIRS}/python310_d.lib")
+    message("${Python_LIBRARY_DIRS}")
+    message("${Python_ROOT_DIR}")
+
+    message("${Python_VERSION}")
 
     set(PYBIND11_NEWPYTHON ON)
     find_package(pybind11 CONFIG REQUIRED)

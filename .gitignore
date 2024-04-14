@@ -67,3 +67,7 @@
 # Others
 *.log
 *.pdb
+
+/*/dist
+/dist
+.python-version

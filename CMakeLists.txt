@@ -5,6 +5,9 @@ option(test "Build all tests." ON)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/mssa)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/mssa)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/mssa)
+set(Python3_ROOT_DIR "C:\\Users\\klsteele\\.pyenv\\pyenv-win\\versions\\3.11.5\\")
+set(Python_ROOT_DIR "C:\\Users\\klsteele\\.pyenv\\pyenv-win\\versions\\3.11.5\\")
+
 message("Bin: ${CMAKE_BINARY_DIR}")
 
 # Setup toolchain and compiler

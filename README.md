@@ -78,3 +78,9 @@ After creating build directory, make release folder, then build and compile the 
  - `cmake --build \build`
 
 The built executable will be within the `build/*/mssa` folder. If in release mode, it will also zip the compiled code into the %Project_Source%/release folder.
+
+### Python Building
+On Windows, ensure that you are using the Visual Studio environment settings before compiling. This can be achieved either by using VS clients, or running the environment setup command if running pipx in the command line.
+
+Example location:
+ - "C:\Program Files\Microsoft Visual Studio\\[edition]\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
