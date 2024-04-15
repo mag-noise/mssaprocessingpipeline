@@ -56,17 +56,67 @@ py::dict pyEntry(const py::dict &inputs) {
 	// Initialize flags
 	
 	// Access lists from the dictionary
-    py::array inboard_input = inputs["inboard_input"].cast<py::array>().attr("flatten")();;
-    py::array outboard_input = inputs["outboard_input"].cast<py::array>().attr("flatten")();;
-    py::array timestamp = inputs["timestamp"].cast<py::array>().attr("flatten")();;
+    py::array_t<double> inboard_input = inputs["inboard_input"].cast<py::array_t<double>>().attr("flatten")();;
+    py::array_t<double> outboard_input = inputs["outboard_input"].cast<py::array_t<double>>().attr("flatten")();;
+    py::array_t<double> timestamp = inputs["timestamp"].cast<py::array_t<double>>().attr("flatten")();;
 
 	// Access other values from the dictionary
 	unsigned int dimensions = inputs["dimensions"].cast<unsigned int>();
 	double alpha_threshold = inputs["alpha_threshold"].cast<double>();
 	int segment_size = inputs["segment_size"].cast<int>();
 
-	cout << alpha_threshold << endl;
+	MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);
+	MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false, dimensions);
+	py::buffer_info buf1 = inboard_input.request();
+	double* ptr1 = static_cast<double*>(buf1.ptr);
+	vector<double> dest(ptr1, ptr1+inboard_input.size());
 
+	py::buffer_info buf2 = outboard_input.request();
+	double* ptr2 = static_cast<double*>(buf2.ptr);
+	vector<double> dest2(ptr2, ptr2 + outboard_input.size());
+
+	Utils::FlagSystem::GetInstance()->Resize(dest.size());
+	Utils::FlagSystem::GetInstance()->FlagNaN(dest);
+	Utils::FlagSystem::GetInstance()->FlagNaN(dest2);
+
+
+
+	inboard.PreProcess(dest, true);
+	outboard.PreProcess(dest2, true);
+
+	std::vector<double> alpha_val = { 0.05 };
+	// Use more than default
+
+	MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
+
+	auto temp = outboard.JoinWheel();
+	auto wheel = inboard.JoinWheel();
+
+	py::array_t<double> inboard_wheel = py::array(wheel.size(), wheel.data());
+	inboard_wheel.reshape({ dimensions, static_cast<unsigned int>(wheel.size() / dimensions) });
+
+	temp = outboard.JoinWheel();
+	py::array_t<double> outboard_wheel = py::array(temp.size(), temp.data());
+	outboard_wheel.reshape({ dimensions, static_cast<unsigned int>(temp.size() / dimensions) });
+
+	auto signal = inboard.JoinSignal(dest);
+	py::array_t<double> inboard_output = py::array(signal.size(), signal.data());
+	inboard_output.reshape({ dimensions, static_cast<unsigned int>(signal.size() / dimensions) });
+	inboard.CheckSignalDifference(signal, wheel, dest);
+
+	auto signal2 = outboard.JoinSignal(dest2);
+	py::array_t<double> outboard_output = py::array(signal2.size(), signal2.data());
+	outboard_output.reshape({ dimensions, static_cast<unsigned int>(signal2.size() / dimensions) });
+	outboard.CheckSignalDifference(signal2, temp, dest2);
+
+	std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
+	py::array_t<double> flags_output = py::array(temp2.size(), temp2.data());
+	flags_output.reshape({ dimensions, static_cast<unsigned int>(temp2.size() / dimensions) });
+	
+	py::dict outputDict("inboard_output"_a = inboard_output, "outboard_output"_a = outboard_output,
+						"inboard_wheel"_a=inboard_wheel, "outboard_wheel"_a=outboard_wheel,
+						"flags"_a=flags_output);
+	return outputDict;
     /*
 	* 
 
@@ -159,8 +209,7 @@ py::dict pyEntry(const py::dict &inputs) {
 	}
 
 			*/
-	py::dict outputDict("spam"_a = inboard_input, "eggs"_a = timestamp);
-	return outputDict;
+
 	
 }
 
