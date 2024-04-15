@@ -52,6 +52,7 @@ Utils::FlagSystem* Utils::FlagSystem::instance;
 py::dict pyEntry(const py::dict &inputs) {
 	using SignalProcessingUnit::MSSAProcessingUnit;
 	using namespace pybind11::literals; // to bring in the `_a` literal
+	using namespace std;
 	// Initialize flags
 	
 	// Access lists from the dictionary
@@ -64,6 +65,7 @@ py::dict pyEntry(const py::dict &inputs) {
 	double alpha_threshold = inputs["alpha_threshold"].cast<double>();
 	int segment_size = inputs["segment_size"].cast<int>();
 
+	cout << alpha_threshold << endl;
 
     /*
 	* 
@@ -157,7 +159,7 @@ py::dict pyEntry(const py::dict &inputs) {
 	}
 
 			*/
-	py::dict outputDict("spam"_a = py::none(), "eggs"_a = 42);
+	py::dict outputDict("spam"_a = inboard_input, "eggs"_a = timestamp);
 	return outputDict;
 	
 }
