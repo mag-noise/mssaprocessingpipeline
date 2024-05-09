@@ -88,9 +88,11 @@ namespace SignalProcessingUnit{
 		A JoinSignal(A original = A());
 		A JoinWheel();
 		std::vector<A> operator[](char);
+		//friend ostream& operator<<(ostream& os, MSSAProcessingUnit<T,A> );
 		std::size_t size();
 		std::pair<int, int> SegmentIndices(int);
 		int GetDimensions();
+
 	};
 
 	using SignalProcessingUnit::MSSAProcessingUnit;
@@ -457,6 +459,7 @@ namespace SignalProcessingUnit{
 		return _segmented_signal_container[index];
 	}
 
+
 	/// <summary>
 	/// Quick access to segment size
 	/// </summary>
@@ -640,3 +643,14 @@ namespace SignalProcessingUnit{
 
 
 }
+
+//using namespace std;
+//using SignalProcessingUnit::MSSAProcessingUnit;
+//template < typename T, typename A = std::vector<T>>
+//ostream& operator<<(ostream& os, const MSSAProcessingUnit<T, A> mpu)
+//{
+//	auto local_values=mpu.JoinSignal(A(0))
+//	
+//	os << local_values;
+//	return os;
+//}

@@ -10,17 +10,14 @@ elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
     message("Release Mode")
     set(SKBUILD_CMAKE_BUILD_TYPE Release)
 endif()
-set(Python3_ROOT_DIR C:/Users/klsteele/.pyenv/pyenv-win/versions/3.11.5/)
-#set(Python_FIND_STRATEGY LOCATION)
-#set(Python_FIND_REGISTRY NEVER)
-#set(Python_FIND_UNVERSIONED_NAMES FIRST)
-#set(PYBIND11_FINDPYTHON OFF)
+
+
+# If a specific version of python is required, then use the following or provide with
+# command line cmake call:
+# set(Python3_ROOT_DIR <python.exe root dir>)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
-#set(Python_INCLUDE_DIR "C:/Users/klsteele/.pyenv/pyenv-win/versions/3.11.5/include")
 if(Python3_FOUND)
     message("${Python_LIBRARY_DIRS}")
-    #message("${Python3_ROOT_DIR}")
-
     message("${Python_VERSION}")
 
     set(PYBIND11_NEWPYTHON ON)
@@ -28,7 +25,6 @@ if(Python3_FOUND)
     find_package(pybind11 CONFIG REQUIRED)
     # Add a library using FindPython's tooling (pybind11 also provides a helper like
     # this)
-
     python3_add_library(MSSAPython MODULE src/pyEntry.cpp WITH_SOABI)
 
     target_link_libraries(MSSAPython PRIVATE pybind11::headers)

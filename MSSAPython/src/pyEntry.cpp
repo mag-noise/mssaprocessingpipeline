@@ -64,6 +64,8 @@ py::dict pyEntry(const py::dict &inputs) {
 	unsigned int dimensions = inputs["dimensions"].cast<unsigned int>();
 	double alpha_threshold = inputs["alpha_threshold"].cast<double>();
 	int segment_size = inputs["segment_size"].cast<int>();
+	int window_size = inputs["window_size"].cast<int>();
+	Processor::MSSA::DynamicVariableSetup(segment_size, window_size);
 
 	MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);
 	MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false, dimensions);
@@ -84,8 +86,13 @@ py::dict pyEntry(const py::dict &inputs) {
 	inboard.PreProcess(dest, true);
 	outboard.PreProcess(dest2, true);
 
-	std::vector<double> alpha_val = { 0.05 };
+	std::vector<double> alpha_val = { alpha_threshold, alpha_threshold, alpha_threshold};
 	// Use more than default
+	cout << alpha_val[0] << endl;
+	/*for (auto i : static_cast<std::vector<double>>(inboard.JoinSignal(std::vector<double>(0)))) {
+		cout << i << ",";
+	}
+	cout << "]" << endl;*/
 
 	MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 

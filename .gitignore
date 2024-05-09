@@ -67,7 +67,10 @@
 # Others
 *.log
 *.pdb
-
+*.cdf
+*.csv
+sample.json
+LoadSampleData.m
 /*/dist
 /dist
 .python-version
