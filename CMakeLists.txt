@@ -41,5 +41,5 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(MSSALibraries)
 
-add_subdirectory(MSSAProcessingPipeline)
 add_subdirectory(MSSAPython)
+add_subdirectory(MSSAProcessingPipeline)
