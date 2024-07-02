@@ -43,6 +43,7 @@
 /build
 /build_lib
 /tests/build
+/MSSAProcessingPipeline/build
 /.vs
 /.vscode
 /out
