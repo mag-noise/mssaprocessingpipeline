@@ -43,3 +43,17 @@ project(MSSALibraries)
 
 add_subdirectory(MSSAPython)
 add_subdirectory(MSSAProcessingPipeline)
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
+    message("Release Mode")
+
+    add_custom_command(TARGET MSSALibraries
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} 
+                    -DCMAKE_RELEASE_LOCATION=${PROJECT_SOURCE_DIR}/release 
+                    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                    -DEIGEN3_INCLUDE_DIRS=${EIGEN3_INCLUDE_DIRS}/Eigen
+                    -P ${PROJECT_SOURCE_DIR}/zipfiles.cmake
+    )
+endif()

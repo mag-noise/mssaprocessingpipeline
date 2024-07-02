@@ -27,20 +27,9 @@ if(Matlab_FOUND)
     matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx DOCUMENTATION ${PROJECT_SOURCE_DIR}/docs/MSSAMex.txt)    
 endif()
 
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     message("Debug Mode")	
     enable_testing()
     add_subdirectory(tests)
-elseif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
-    message("Release Mode")
-
-    add_custom_command(TARGET MSSAMex
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} 
-                    -DCMAKE_RELEASE_LOCATION=${PROJECT_SOURCE_DIR}/../release 
-                    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-                    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                    -DEIGEN3_INCLUDE_DIRS=${EIGEN3_INCLUDE_DIRS}/Eigen
-                    -P ${PROJECT_SOURCE_DIR}/zipfiles.cmake
-    )
 endif()
