@@ -39,15 +39,50 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-project(MSSALibraries)
 
-add_subdirectory(MSSAPython)
-add_subdirectory(MSSAProcessingPipeline)
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
-    message("Release Mode")
+message("${CMAKE_BUILD_TYPE}")
 
-    add_custom_command(TARGET MSSALibraries
+project(MSSAProcessingPipeline VERSION 1.2.0)
+file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.cpp ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.hpp)
+
+list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/mexEntry.cpp)
+list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/pyEntry.cpp)
+
+add_library(${PROJECT_NAME} STATIC ${file_search})
+add_library(sub::mssaLib ALIAS ${PROJECT_NAME})
+target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
+message("Prefix: ${CMAKE_PREFIX_PATH}")
+if(DEFINED ENV{EIGEN3_INCLUDE_DIR})
+    include_directories("$ENV{EIGEN3_INCLUDE_DIR}")
+    set(EIGEN3_INCLUDE_DIR "$ENV{EIGEN3_INCLUDE_DIR}")
+else()
+    find_package(Eigen3 REQUIRED)
+endif()
+
+#include_directories(${EIGEN_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
+
+# Requires that a version of Matlab be installed and found. If not found, add to PATH or Matlab_ROOT_DIR
+find_package(Matlab)
+if(Matlab_FOUND)
+	target_link_libraries(${PROJECT_NAME} PRIVATE Matlab::MatlabEngine Matlab::MatlabDataArray)
+    matlab_add_mex(NAME MSSAMex SHARED SRC ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/mexEntry.cpp LINK_TO ${PROJECT_NAME} Eigen3::Eigen Matlab::mex Matlab::mx DOCUMENTATION ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/docs/MSSAMex.txt)    
+endif()
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    message("Debug Mode")	
+    enable_testing()
+    add_subdirectory(tests)
+
+endif()
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    message("Release Mode MSSALibraries")
+
+    add_custom_command(TARGET MSSAMex
                     POST_BUILD
                     COMMAND ${CMAKE_COMMAND} 
                     -DCMAKE_RELEASE_LOCATION=${PROJECT_SOURCE_DIR}/release 
@@ -57,3 +92,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND Matlab_FOUND)
                     -P ${PROJECT_SOURCE_DIR}/zipfiles.cmake
     )
 endif()
+configure_file(${PROJECT_SOURCE_DIR}/MSSAPython/pyproject.toml ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/README.md ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} COPYONLY)
+
+add_subdirectory(MSSAPython)

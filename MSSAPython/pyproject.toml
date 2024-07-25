@@ -7,26 +7,29 @@ build-backend = "scikit_build_core.build"
 name = "MSSAPython"
 version = "0.1.0"
 description="Python bindings to MSSA Processing Pipeline. Made using pybind11"
-readme = "README.md"
+readme = "./README.md"
 authors = [
   { name = "Kevin Steele", email = "kevin-steele@uiowa.edu" },
 ]
-requires-python = ">=3.7"
+license = {text = "MIT License"}
+requires-python = ">=3.10"
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 0.1.0-Beta",
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python",
+  "Programming Language :: C++",
 ]
+dependencies = [
+	"pybind11>=2.13.1"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/mag-noise/mssaprocessingpipeline"
+Issues = "https://github.com/mag-noise/mssaprocessingpipeline/issues"
 
 [project.optional-dependencies]
 test = ["pytest"]
-
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
