@@ -65,6 +65,35 @@ endif()
 #include_directories(${EIGEN_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 
+
+ # this is heuristically generated, and may not be correct
+find_package(Caffe2 CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE protobuf::libprotobuf)
+
+find_package(Torch CONFIG REQUIRED)
+include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE "${TORCH_LIBRARIES}")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+#target_link_libraries(${PROJECT_NAME}  "${TORCH_LIBRARIES}")
+
+# The following code block is suggested to be used on Windows.
+# According to https://github.com/pytorch/pytorch/issues/25457,
+# the DLLs need to be copied to avoid memory errors.
+if (MSVC)
+    file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
+
+    # do the copying
+    foreach( file_i ${TORCH_DLLS})
+        add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy ${file_i} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+    )
+    endforeach( file_i )
+endif (MSVC)
+
 # Requires that a version of Matlab be installed and found. If not found, add to PATH or Matlab_ROOT_DIR
 find_package(Matlab)
 if(Matlab_FOUND)
@@ -75,8 +104,7 @@ endif()
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     message("Debug Mode")	
     enable_testing()
-    add_subdirectory(tests)
-
+    add_subdirectory(MSSAProcessingPipeline/tests)
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")

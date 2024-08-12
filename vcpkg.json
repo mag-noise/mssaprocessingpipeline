@@ -14,6 +14,10 @@
     {
       "name": "pybind11",
       "platform": "windows | linux"
+    },
+    {
+      "name": "libtorch",
+      "platform": "windows | linux"
     }
   ]
 
