@@ -44,8 +44,12 @@ if(test)
 	set(CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
 	
 	gtest_discover_tests(${PROJECT_NAME})
-    add_compile_definitions(GLOG_USE_GLOG_EXPORT)
-	add_compile_definitions(_MAT_ _TEST)
+    
+	add_compile_definitions(GLOG_USE_GLOG_EXPORT)
+	#add_compile_definitions(_MAT_)
+	add_compile_definitions(_TEST)
+	
+	
 	#add_test(NAME CorrectlyReadsCSVFile COMMAND ${PROJECT_NAME})
 	#add_test(NAME RecreatesOriginalRandom COMMAND ${PROJECT_NAME})
 	#add_test(NAME RecreatesOriginal COMMAND ${PROJECT_NAME})

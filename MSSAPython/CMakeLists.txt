@@ -30,7 +30,7 @@ if(Python_FOUND)
 
     # Add a library using FindPython's tooling (pybind11 also provides a helper like
     # this)
-    Python_add_library(MSSAPython src/pyEntry.cpp)
+    #Python_add_library(MSSAPython src/pyEntry.cpp)
 
     set_target_properties(MSSAPython PROPERTIES
         INTERPROCEDURAL_OPTIMIZATION ON
