@@ -20,10 +20,10 @@ Function inputs are as ordered in the following manner:
 1. inboard_input: 3D magnetic field data in 3xN double value format
 2. outboard_input: 3D magnetic field data in 3xN double value format
 3. timeline: 1D matrix of datetime values representing the time the magnetic field data record was recorded
-4. dimensions: N in the NxM matrix provided to MSSAMex. Default to 3
-5. alpha_threshold: Value between [0, 1] used to select components for reconstruction
-6. segment_size: Size of the N magnetic field data points to use as for each analysis cycle. If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments (exludes last segment)
-7. window_size: Size of the window used by MSSA when deconstructing signal.
+4. dimensions (optional): N in the NxM matrix provided to MSSAMex. Default to 3
+5. alpha_threshold (optional): Value between [0, 1] used to select components for reconstruction
+6. segment_size (optional): Size of the N magnetic field data points to use as for each analysis cycle. If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments (exludes last segment)
+7. window_size (optional): Size of the window used by MSSA when deconstructing signal.
 
 Function outputs are ordered as follows:
 1. inboard_result: Reconstructed 3D magnetic field data representing the Inboard data

@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm> // for copy() and assign() 
 #include <iterator> // for back_inserter 
+#include <stdexcept>
 
 #include "mex.hpp"
 #include "mexAdapter.hpp"
@@ -56,12 +57,19 @@ public:
 				matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
 				std::vector<double> timevec(timenum.begin(), timenum.end());
 				Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
+				if (timevec.size() != inboard.size() / 3 && timevec.size() != outboard.size() / 3) {
+					throw std::invalid_argument("Error: input time matrix size must be equal to the input signal matrices");
+				}
 			}
 			else {
 				matlab::data::TypedArray<double> timenum = std::move(inputs[2]);
 				std::vector<double> timevec(timenum.begin(), timenum.end());
 				Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
+				if (timevec.size() != inboard.size() / 3 && timevec.size() != outboard.size() / 3) {
+					throw std::invalid_argument("Error: input time matrix size must be equal to the input signal matrices");
+				}
 			}
+
 
 			inboard.PreProcess(dest, true);
 			outboard.PreProcess(dest2, true);

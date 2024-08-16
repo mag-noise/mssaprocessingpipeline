@@ -5,7 +5,9 @@
 #include <cmath>
 #include <functional>
 //#include <torch/csrc/api/include/torch/torch.h>
-#include <torch/torch.h>
+#ifdef _TORCH
+	#include <torch/torch.h>
+#endif
 
 namespace Utils {
 	using namespace std;
@@ -14,6 +16,7 @@ namespace Utils {
 	/// </summary>
 	struct Injector
 	{
+#ifdef _TORCH
 	private:
 		torch::Tensor model;
 	public:
@@ -25,7 +28,18 @@ namespace Utils {
 		Injector(std::string fileLocation) {
 			model = torch::rand({ 2, 3 });
 		}
+#else
+	private:
+		int model;
+	public:
+		Injector() {
+			model = 0;
+		}
 
+		Injector(std::string fileLocation) {
+			model = 1;
+		}
+#endif
 		void HelloWorld();
 
 	};

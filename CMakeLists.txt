@@ -49,10 +49,6 @@ file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/mexEntry.cpp)
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/pyEntry.cpp)
 
-add_library(${PROJECT_NAME} STATIC ${file_search})
-add_library(sub::mssaLib ALIAS ${PROJECT_NAME})
-target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 message("Prefix: ${CMAKE_PREFIX_PATH}")
 if(DEFINED ENV{EIGEN3_INCLUDE_DIR})
@@ -62,38 +58,52 @@ else()
     find_package(Eigen3 REQUIRED)
 endif()
 
+
+find_package(Torch CONFIG)
+if(Torch_FOUND)
+    include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
+else()
+    list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/Utilities/ModelInjector.hpp)
+endif(Torch_FOUND)
+
+# Generate Library based on what's allowed by packages found
+add_library(${PROJECT_NAME} STATIC ${file_search})
+add_library(sub::mssaLib ALIAS ${PROJECT_NAME})
+target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
 #include_directories(${EIGEN_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
-
 
  # this is heuristically generated, and may not be correct
 find_package(Caffe2 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE protobuf::libprotobuf)
 
-find_package(Torch CONFIG REQUIRED)
-include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE "${TORCH_LIBRARIES}")
+if(Torch_FOUND)
+	add_compile_definitions(_TORCH)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-#target_link_libraries(${PROJECT_NAME}  "${TORCH_LIBRARIES}")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${TORCH_LIBRARIES}")
 
-# The following code block is suggested to be used on Windows.
-# According to https://github.com/pytorch/pytorch/issues/25457,
-# the DLLs need to be copied to avoid memory errors.
-if (MSVC)
-    file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+    #target_link_libraries(${PROJECT_NAME}  "${TORCH_LIBRARIES}")
 
-    # do the copying
-    foreach( file_i ${TORCH_DLLS})
-        add_custom_command(
-        TARGET ${PROJECT_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy ${file_i} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-    )
-    endforeach( file_i )
-endif (MSVC)
+    # The following code block is suggested to be used on Windows.
+    # According to https://github.com/pytorch/pytorch/issues/25457,
+    # the DLLs need to be copied to avoid memory errors.
+    if (MSVC)
+        file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
 
+        # do the copying
+        foreach( file_i ${TORCH_DLLS})
+            add_custom_command(
+            TARGET ${PROJECT_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+            ARGS -E copy ${file_i} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+        )
+        endforeach( file_i )
+    endif (MSVC)
+endif(Torch_FOUND)
 # Requires that a version of Matlab be installed and found. If not found, add to PATH or Matlab_ROOT_DIR
 find_package(Matlab)
 if(Matlab_FOUND)
