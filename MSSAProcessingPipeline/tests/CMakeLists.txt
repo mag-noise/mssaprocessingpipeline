@@ -4,14 +4,14 @@ if(test)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 	project(ProcessingTests VERSION 1.0.0)
 	
-	include(FetchContent)
-	FetchContent_Declare(
-	  googletest
-	  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-	)
+	#include(FetchContent)
+	#FetchContent_Declare(
+	#  googletest
+	#  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+	#)
 	# For Windows: Prevent overriding the parent project's compiler/linker settings
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	FetchContent_MakeAvailable(googletest)
+	#set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	#FetchContent_MakeAvailable(googletest)
 
 	get_filename_component(PROJECT_PARENT ${PROJECT_SOURCE_DIR} DIRECTORY)
 	file(GLOB_RECURSE file_search ${PROJECT_PARENT}/src/*.cpp ${PROJECT_PARENT}/src/*.hpp)
@@ -31,9 +31,10 @@ if(test)
 	include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 	include_directories(${EIGEN_INCLUDE_DIRS})
 	include_directories(${GTEST_INCLUDE_DIRS})
+	Message("${GTEST_INCLUDE_DIRS}")
 
 	target_link_libraries(${PROJECT_NAME} mimalloc)
-	target_link_libraries(${PROJECT_NAME} GTest::gtest GTest::Main)
+	target_link_libraries(${PROJECT_NAME} GTest::gtest_main)
 	target_link_libraries(${PROJECT_NAME} Eigen3::Eigen Matlab::MatlabEngine Matlab::MatlabDataArray )
 	target_link_libraries(${PROJECT_NAME} "${TORCH_LIBRARIES}")
 	
