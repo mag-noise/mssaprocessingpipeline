@@ -16,7 +16,9 @@ using namespace Processor;
 
 namespace Utils {
 	/// <summary>
-	/// Singleton structure to load and utilize the decision model for reconstructing the input signals
+	/// Singleton structure to load and utilize the decision model for reconstructing the input signals.
+	/// NOTE FOR ALL FURTURE SINGLETONS: They must be defined inside any files generating a library or executable.
+	/// -> Example in mexEntry.cpp
 	/// </summary>
 	class Injector
 	{
