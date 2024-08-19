@@ -14,7 +14,7 @@
 namespace Utils {
 	using namespace std;
 	/// <summary>
-	/// Structure to organize use of gradient reduction within intersecting segments
+	/// Structure to load and utilize the decision model for reconstructing the input signals
 	/// </summary>
 	struct Injector
 	{
@@ -42,6 +42,11 @@ namespace Utils {
 	inline void Injector::HelloWorld() {
 		std::cout << "Hello World" << std::endl;
 	}
+
+	/// <summary>
+	/// Finds the TorchScript file to load
+	/// </summary>
+	/// <param name="filename">Path to file</param>
 	inline void Injector::LoadModel(string filename) {
 		try {
 			// Deserialize the ScriptModule from a file using torch::jit::load().
@@ -51,6 +56,11 @@ namespace Utils {
 			std::cerr << "error loading the model\n";
 		}
 	}
+
+	/// <summary>
+	/// Function to Apply the Injector's model to an Eigen matrix. This is where the decision function is run to tell if a component is valuable to the signal.
+	/// </summary>
+	/// <param name="input">Reconstruction Matrix is the expected value, but it can be anything</param>
 	inline void Injector::ApplyModel(Eigen::MatrixXd input) {
 		// Converts Eigen to PyTorch Tensor
 		// Based on https://stackoverflow.com/questions/74231905/how-to-convert-eigen-martix-to-torch-tensor
