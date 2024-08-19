@@ -24,7 +24,7 @@
 // TODO: Add functionality for parallelism
 namespace SignalProcessingUnit{
 	using namespace std;
-
+	using namespace Utils;
 	/// <summary>
 	/// Instance class to contain and represent a signal as well as its processing.
 	/// </summary>
@@ -528,7 +528,7 @@ namespace SignalProcessingUnit{
 		if (inboard.GetDimensions() != outboard.GetDimensions())
 			return;
 		
-		Utils::Injector injector = Utils::Injector();
+		Utils::Injector& injector = Utils::Injector::GetInstance();
 		injector.LoadModel("Location");
 		// TODO: Make work for both XYZ and non-XYZ
 		for (char vec = 'a'; vec < 'a' + inboard.GetDimensions(); vec++) {

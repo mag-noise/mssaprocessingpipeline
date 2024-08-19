@@ -11,6 +11,7 @@
 #include "mex.hpp"
 #include "mexAdapter.hpp"
 Utils::FlagSystem* Utils::FlagSystem::instance;
+Utils::Injector* Utils::Injector::instance;
 class MexFunction : public matlab::mex::Function {
 private:
 	//std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr;

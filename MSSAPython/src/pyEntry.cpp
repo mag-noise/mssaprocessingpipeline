@@ -49,6 +49,7 @@ Function Description:
 
 
 Utils::FlagSystem* Utils::FlagSystem::instance;
+Utils::Injector* Utils::Injector::instance;
 py::dict pyEntry(const py::dict &inputs) {
 	using SignalProcessingUnit::MSSAProcessingUnit;
 	using namespace pybind11::literals; // to bring in the `_a` literal

@@ -14,6 +14,8 @@
 namespace Utils{
 	/// <summary>
 	/// Singleton class to maintain flags across signals
+    /// NOTE FOR ALL FURTURE SINGLETONS: They must be defined inside any files generating a library or executable.
+	/// -> Example in mexEntry.cpp
 	/// </summary>
 	class FlagSystem
 	{
