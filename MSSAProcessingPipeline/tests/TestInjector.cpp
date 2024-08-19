@@ -30,7 +30,7 @@ namespace Testing {
             std::vector<double>outboard(5000, 1);
             testMatrix = Processor::MSSA::Process(inboard, outboard);
 
-            testInjector.ApplyModel(testMatrix);
+            testInjector.ApplyModel(testMatrix, inboard, outboard, 0.05);
             EXPECT_EQ(true, true);
         }
 

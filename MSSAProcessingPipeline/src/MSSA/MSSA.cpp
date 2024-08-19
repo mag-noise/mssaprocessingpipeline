@@ -225,50 +225,6 @@ namespace Processor{
             return (x.array() * y.array()).sum() / val2;
     }
 
-    /// <summary>
-    /// Gets a list of indices that are required for reconstruction
-    /// </summary>
-    /// <param name="recon"></param>
-    /// <param name="inboard"></param>
-    /// <param name="outboard"></param>
-    /// <returns></returns>
-    std::vector<int> MSSA::ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha) {
-        Eigen::Map<Eigen::MatrixXd> x(inboard.data(), 1, InputSize());
-        Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, InputSize());
-        MatrixXd interference = x-y;
-
-        std::vector<int> indexList = std::vector<int>();
-        std::vector<double> listOfCheckValues = std::vector<double>();
-        //std::vector<double> listOfCheckValuesX = std::vector<double>();
-        //std::vector<double> listOfCheckValuesY = std::vector<double>();
-
-        for (int i = 0; i < recon.cols(); i++) {
-            try {
-                auto check = CorrelationCoefficient(recon.col(i), interference);
-                auto checkX = CorrelationCoefficient(recon.col(i), x);
-                auto checkY = CorrelationCoefficient(recon.col(i), y);
-                if ((abs(check) > alpha && abs(check) > abs(checkX) && abs(check) > abs(checkY))||
-                    (abs(abs(check) - abs(checkX)) < alpha) || abs(abs(check) - abs(checkY)) < alpha) {
-                    indexList.push_back(i);
-                }
-                listOfCheckValues.push_back(check);
-                //listOfCheckValuesX.push_back(checkX);
-                //listOfCheckValuesY.push_back(checkY);
-            }
-            catch (std::exception const& ex) {
-                std::string error_message = "";
-                error_message.append(ex.what());
-                error_message.append("\nError occurred in correlation coefficient calculations.");
-                throw std::invalid_argument(error_message.c_str());
-
-            }
-
-        }
-        //indexList = { 0, 1, 40, 41 };
-        return indexList;
-    }
-
-
     
 #pragma endregion MSSA_PUBLIC_REGION
     
