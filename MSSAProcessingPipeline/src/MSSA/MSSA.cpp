@@ -115,14 +115,14 @@ namespace Processor{
                 projectionRowVector = proj.row(m);
                 endVector = selectedEigVector *(projectionRowVector);
                 rMatrix.col(m + WindowSize() * number_of_signals * sig_m) = SkewVectorAverage(endVector);
-#ifdef _TEST
-                if(m==0){
-                    cout << "selectedEigenVector: " << selectedEigVector << endl;
-                    cout << "projectionRowVector: " << projectionRowVector << endl;
-                    cout << "endVector: " << endVector << endl;
-                    cout << "rMatrix: " << rMatrix.col(m + WindowSize() * number_of_signals * sig_m) << endl;
-                }
-#endif
+//#ifdef _TEST
+//                if(m==0){
+//                    cout << "selectedEigenVector: " << selectedEigVector << endl;
+//                    cout << "projectionRowVector: " << projectionRowVector << endl;
+//                    cout << "endVector: " << endVector << endl;
+//                    cout << "rMatrix: " << rMatrix.col(m + WindowSize() * number_of_signals * sig_m) << endl;
+//                }
+//#endif
 
 
             }

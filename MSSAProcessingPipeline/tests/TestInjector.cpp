@@ -1,5 +1,7 @@
 #include "../src/Utilities/ModelInjector.hpp"
 #include "gtest/gtest.h"
+#include <Eigen/dense>
+#include "../src/MSSA/MSSA.hpp"
 
 namespace Testing {
     namespace Injection {
@@ -12,7 +14,8 @@ namespace Testing {
             protected:
 
                 InjectorTest() {
-                    testInjector = Utils::Injector("hi");
+                    testInjector = Utils::Injector();
+                    testInjector.LoadModel("C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\MSSAProcessingPipeline\\models\\FCN_20E_20240614_120751.pt");
                 }
 
                 ~InjectorTest() override {
@@ -22,7 +25,12 @@ namespace Testing {
 
         }
         TEST_F(InjectorTest, GenerateInjector) {
-            testInjector.HelloWorld();
+            auto testMatrix = Eigen::MatrixXd();
+            std::vector<double>inboard(5000, 0);
+            std::vector<double>outboard(5000, 1);
+            testMatrix = Processor::MSSA::Process(inboard, outboard);
+
+            testInjector.ApplyModel(testMatrix);
             EXPECT_EQ(true, true);
         }
 
