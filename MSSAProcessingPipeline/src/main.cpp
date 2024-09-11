@@ -13,7 +13,6 @@ int main(int argc, char* argv[]) {
     using namespace Processor;
     using SignalProcessingUnit::MSSAProcessingUnit;
     using namespace Utils;
-    Utils::Injector& tester = Utils::Injector::GetInstance();
 
     //MSSAProcessingUnit<double, vector<double>> spu1{};
 

@@ -27,6 +27,13 @@ public:
 		checkArguments(outputs, inputs, matlabPtr, factory);
 		
 		try {
+
+			matlab::data::TypedArray<double> in = std::move(inputs[0]);
+			std::vector<double> dest(in.begin(), in.end());
+
+			matlab::data::TypedArray<double> out = std::move(inputs[1]);
+			std::vector<double> dest2(out.begin(), out.end());
+
 			unsigned int dimensions = 3;
 			if (inputs.size() > 3) {
 				matlab::data::TypedArray<double> dimen = std::move(inputs[3]);
@@ -36,17 +43,21 @@ public:
 			{
 				matlab::data::TypedArray<double> inputSize = std::move(inputs[5]);
 				matlab::data::TypedArray<double> windowSize = std::move(inputs[6]);
+				if (inputSize[0] <= 0) {
+					inputSize[0] = floor(dest.size() / dimensions);
+				}
 				Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize[0], /*Window Size*/windowSize[0]);
+			}
+			if (inputs.size() > 7) {
+				Utils::Injector* injector = Utils::Injector::GetInstance();
+				//matlab::data::TypedArray<matlab::data::MATLABString> inArrayRef1 = std::move(inputs[7]);
+				//std::string modelLocation = std::string(inArrayRef1[0]);
+				//injector.LoadModel(modelLocation);
+				injector->LoadModel("C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\MSSAProcessingPipeline\\models\\FCN_20E_20240614_120751.pt");
 			}
 
 			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);
 			MSSAProcessingUnit<double> outboard = MSSAProcessingUnit<double>(false, dimensions);
-
-			matlab::data::TypedArray<double> in = std::move(inputs[0]);
-			std::vector<double> dest(in.begin(), in.end());
-
-			matlab::data::TypedArray<double> out = std::move(inputs[1]);
-			std::vector<double> dest2(out.begin(), out.end());
 
 			
 			Utils::FlagSystem::GetInstance()->Resize(dest.size());
@@ -58,7 +69,7 @@ public:
 				matlab::data::TypedArray<double> timenum = matlabPtr->feval(u"datenum", time);
 				std::vector<double> timevec(timenum.begin(), timenum.end());
 				Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
-				if (timevec.size() != inboard.size() / 3 && timevec.size() != outboard.size() / 3) {
+				if (timevec.size() != dest.size() / 3 && timevec.size() != dest2.size() / 3) {
 					throw std::invalid_argument("Error: input time matrix size must be equal to the input signal matrices");
 				}
 			}
@@ -66,7 +77,7 @@ public:
 				matlab::data::TypedArray<double> timenum = std::move(inputs[2]);
 				std::vector<double> timevec(timenum.begin(), timenum.end());
 				Utils::FlagSystem::GetInstance()->FlagDiscontinuity(timevec);
-				if (timevec.size() != inboard.size() / 3 && timevec.size() != outboard.size() / 3) {
+				if (timevec.size() != dest.size() / 3 && timevec.size() != dest2.size() / 3) {
 					throw std::invalid_argument("Error: input time matrix size must be equal to the input signal matrices");
 				}
 			}

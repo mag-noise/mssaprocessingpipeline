@@ -21,7 +21,7 @@ namespace Utils{
 	{
     public:
         enum flagtype {
-            seg_start, merge, skipped, t_jump, nan, flipped_signal, wheel_error
+            seg_start, merge, skipped, t_jump, nan, flipped_signal, small_section, wheel_error
         };
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace Utils{
         /// </summary>
         struct flag {
         public:
-            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1, start_of_segment:1, flipped:1, failed_wheel:1;
+            uint16_t segment_too_small : 1, is_nan: 1, time_jump : 1, skipped_value : 1, merge_required : 1, time_jump_used : 1, start_of_segment : 1, flipped : 1, failed_wheel : 1;
 
             const bool FlagRaised() {
                 return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value);
@@ -40,11 +40,13 @@ namespace Utils{
             }
             
             // Current makeup of flags:
-            // 0 0 Wheel_error NaN T_Jump Skipped Merge Seg_start 
+            // Wheel_error Too_Small_Segment Flipped_Signal NaN T_Jump Skipped Merge Seg_start 
             // POTENTIAL EXTENSIONS: Inf values | Eigenvector unable to be calculated
-            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | 
-                                    (merge_required << merge)) | (start_of_segment << seg_start) | (flipped << flipped_signal) | 
-                                    (failed_wheel << wheel_error); }
+            operator int() const { 
+                return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | 
+                                    (merge_required << merge) | (start_of_segment << seg_start) | (flipped << flipped_signal) | 
+                                    (failed_wheel << wheel_error) | (segment_too_small << small_section)); 
+            }
 
             friend bool operator<(flag& lhs, flag& rhs) { 
                 return !lhs.FlagRaised() && rhs.FlagRaised();

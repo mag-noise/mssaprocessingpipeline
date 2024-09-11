@@ -9,6 +9,7 @@
 #ifdef _TORCH
 	#include <torch/torch.h>
 	#include <torch/script.h> // One-stop header.
+using namespace torch::indexing;
 #endif
 
 using namespace std;
@@ -37,8 +38,9 @@ namespace Utils {
 		/// GetInstance of Singleton. Apparently this way is thread-safe
 		/// </summary>
 		/// <returns></returns>
-		static Injector& GetInstance() {
-			static Injector instance;
+		static Injector * GetInstance() {
+			if (!instance)
+				instance = new Injector();
 			return instance;
 		}
 
@@ -66,15 +68,40 @@ namespace Utils {
 			// Converts Eigen to PyTorch Tensor
 			// Based on https://stackoverflow.com/questions/74231905/how-to-convert-eigen-martix-to-torch-tensor
 			auto options = torch::TensorOptions().dtype(torch::kFloat32);
-			for (auto row : input.rowwise()) {
-				std::vector<int64_t> dims = { 1, 1, input.cols() };
-				torch::Tensor T = torch::from_blob(row.data(), dims, options).clone();
-				std::vector<torch::jit::IValue> inputs;
-				inputs.push_back(T);
-				at::Tensor output = instance->model.forward(inputs).toTensor();
+			std::vector<int> indexList = std::vector<int>();
+			int idx = 0;
+			for (auto row : input.colwise()) {
+				try {
+					std::vector<int64_t> dims = { 1, 1, input.rows() };
+					torch::Tensor T = torch::from_blob(row.data(), dims, options).clone();
+					std::vector<torch::jit::IValue> inputs;
+					inputs.push_back(T);
+					at::Tensor output = instance->model.forward(inputs).toTensor();
+					/*
+					### Convert labels into probabilities ###
+					### (e.g., label as interference has  ###
+					###  probability of 1 in interference ###
+					###  column, 0 in nominal column)     ###
+					*/
+					auto value1 = output[0][0].item<float>();
+					auto value2 = output[0][1].item<float>();
+					auto accessor = output.accessor<float, 2>();
+					auto test = accessor[0][1];
+					if (value2 > alpha) {
+						indexList.push_back(idx);
+					}
+
+				}
+				catch (std::exception const& ex) {
+					std::string error_message = "";
+					error_message.append(ex.what());
+					error_message.append("\nError occurred in correlation coefficient calculations.");
+					throw std::invalid_argument(error_message.c_str());
+
+				}
+				idx++;
 			}
-			std::vector<int> a(10, 0);
-			return  a;
+			return indexList;
 		}
 #else
 		/// <summary>

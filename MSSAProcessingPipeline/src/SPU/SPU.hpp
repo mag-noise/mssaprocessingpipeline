@@ -528,8 +528,7 @@ namespace SignalProcessingUnit{
 		if (inboard.GetDimensions() != outboard.GetDimensions())
 			return;
 		
-		Utils::Injector& injector = Utils::Injector::GetInstance();
-		injector.LoadModel("Location");
+		Utils::Injector* injector = Utils::Injector::GetInstance();
 		// TODO: Make work for both XYZ and non-XYZ
 		for (char vec = 'a'; vec < 'a' + inboard.GetDimensions(); vec++) {
 			for(int idx = 0; idx < inboard.size(); idx++){
@@ -550,7 +549,7 @@ namespace SignalProcessingUnit{
 					}
 					MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
 	#endif
-					auto componentList = injector.ApplyModel(mat, inboard[vec][idx], outboard[vec][idx], alpha[(vec % 'a')%alpha.size()]);
+					auto componentList = injector->ApplyModel(mat, inboard[vec][idx], outboard[vec][idx], alpha[(vec % 'a')%alpha.size()]);
 					inboard.BuildSignal(mat, componentList, vec, idx);
 					outboard.BuildSignal(mat, componentList, vec, idx);
 	#ifdef _TEST
