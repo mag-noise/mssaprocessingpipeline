@@ -33,6 +33,30 @@
       "cmakeToolchain": "${projectDir}\\tools\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "inheritEnvironments": [ "clang_cl_x64_x64" ],
       "intelliSenseMode": "windows-clang-x64"
+    },
+    {
+      "name": "x64-Debug-No-ML",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\build\\install\\${name}",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${projectDir}\\tools\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
+      "cmakeCommandArgs": "-DNO_ML:BOOL=ON"
+    },
+    {
+      "name": "x64-Release-No-ML",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${projectDir}\\tools\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "cmakeCommandArgs": "-DNO_ML:BOOL=ON"
     }
   ]
 }

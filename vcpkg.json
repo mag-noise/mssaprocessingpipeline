@@ -18,6 +18,10 @@
     {
       "name": "libtorch",
       "platform": "windows | linux"
+    },
+    {
+      "name": "mimalloc",
+      "platform": "windows | linux"
     }
   ]
 }

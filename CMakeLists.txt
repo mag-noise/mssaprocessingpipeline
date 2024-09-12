@@ -59,7 +59,6 @@ else()
     find_package(Eigen3 REQUIRED)
 endif()
 
-
 find_package(Torch CONFIG)
 if(Torch_FOUND)
     include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
@@ -80,9 +79,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 find_package(Caffe2 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE protobuf::libprotobuf)
 
-if(Torch_FOUND)
-	add_compile_definitions(_TORCH)
+# Probably redundant, but at least tests that the check works
+if(not defined NO_ML)
+    set(NO_ML OFF)
+endif(NO_ML)
 
+if(Torch_FOUND and not NO_ML)
+    find_package(mimalloc REQUIRED)
+	add_compile_definitions(_TORCH)
+	target_link_libraries(${PROJECT_NAME} PRIVATE mimalloc)
     target_link_libraries(${PROJECT_NAME} PRIVATE "${TORCH_LIBRARIES}")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")

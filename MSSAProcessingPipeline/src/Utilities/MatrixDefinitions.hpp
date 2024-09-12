@@ -139,13 +139,22 @@ namespace Utils{
         /// </summary>
         /// <param name="start"></param>
         /// <param name="segment_size"></param>
-        void FlagSegment(int start, int segment_size) {
+        void FlagSegment(int start, int segment_size, flagtype[] addition_flags = []) {
             if (start + segment_size < Size())
                 throw std::invalid_argument("Invalid segment constraints. Unable to flag the full requested segment.");
             std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [](flag& val) {
                 val.skipped_value |= 1; 
-                });
+                if (std::find(additional_flags.begin(), additional_flags.end(), flagtype::nan) != additional_flags.end()) {
+                    val.is_nan |= 1;
+                }
+                if (std::find(additional_flags.begin(), additional_flags.end(), flagtype::small_section) != additional_flags.end()) {
+                    val.segment_too_small |= 1;
+                }
+
+            });
         }
+        //seg_start, merge, skipped, t_jump, nan, flipped_signal, small_section, wheel_error
+
 
         /// <summary>
         /// Function to flag the segment start
