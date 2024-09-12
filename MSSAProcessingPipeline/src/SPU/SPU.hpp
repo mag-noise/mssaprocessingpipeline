@@ -534,8 +534,8 @@ namespace SignalProcessingUnit{
 			for(int idx = 0; idx < inboard.size(); idx++){
 				try {
 					if (!(inboard[vec][idx].size() >= 2 * MSSA::WindowSize())) {
-						Utils::FlagSystem::GetInstance()->FlagSegment(idx*MSSA::InputSize() * inboard.GetDimensions(), MSSA::InputSize(), [Utils::FlagSystem::flagtype::small_section]);
-						continue;
+						Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions(), MSSA::InputSize() * inboard.GetDimensions(), [Utils::FlagSystem::flagtype::small_section]);
+						break;
 					}
 
 					MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
@@ -563,7 +563,7 @@ namespace SignalProcessingUnit{
 	#endif // _DEBUG
 				}
 				catch(std::exception const& ex) {
-					Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions(), MSSA::InputSize());
+					Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions() * inboard.GetDimensions(), MSSA::InputSize());
 				}
 			}
 		}
