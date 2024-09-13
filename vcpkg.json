@@ -23,5 +23,7 @@
       "name": "mimalloc",
       "platform": "windows | linux"
     }
-  ]
+  ],
+  "$local_change": "In libtorch's vcpkg.json (located in portfiles), removed CUDA feature to not use FindCUDA. Requirement for cmake 3.27+"
+
 }

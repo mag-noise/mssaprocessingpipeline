@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.27)
 # This CMake is reliant on the existence of Eigen3 existing on the system. Use vcpkg manager on windows to also utilize the CMakeSettings.json
 option(test "Build all tests." ON)
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/mssa)
@@ -40,11 +40,13 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-
-
+if(NOT DEFINED ENV{CMAKE_CUDA_COMPILER} AND NOT DEFINED CMAKE_CUDA_COMPILER)
+    project(MSSAProcessingPipeline VERSION 1.2.0 LANGUAGES CXX)
+else()
+    project(MSSAProcessingPipeline VERSION 1.2.0 LANGUAGES CXX CUDA)
+endif()
 message("${CMAKE_BUILD_TYPE}")
 
-project(MSSAProcessingPipeline VERSION 1.2.0)
 file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.cpp ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.hpp)
 
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/mexEntry.cpp)
@@ -58,6 +60,13 @@ if(DEFINED ENV{EIGEN3_INCLUDE_DIR})
 else()
     find_package(Eigen3 REQUIRED)
 endif()
+
+# Probably redundant, but at least tests that the check works
+if(NOT DEFINED ENV{CMAKE_CUDA_COMPILER} AND NOT DEFINED CMAKE_CUDA_COMPILER )
+    set(NO_ML OFF)
+else()
+    set(NO_ML ON)
+endif(NO_ML)
 
 find_package(Torch CONFIG)
 if(Torch_FOUND)
@@ -79,12 +88,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 find_package(Caffe2 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE protobuf::libprotobuf)
 
-# Probably redundant, but at least tests that the check works
-if(not defined NO_ML)
-    set(NO_ML OFF)
-endif(NO_ML)
+message(${Torch_FOUND})
 
-if(Torch_FOUND and not NO_ML)
+if(Torch_FOUND AND NOT ${NO_ML})
     find_package(mimalloc REQUIRED)
 	add_compile_definitions(_TORCH)
 	target_link_libraries(${PROJECT_NAME} PRIVATE mimalloc)

@@ -50,10 +50,9 @@ public:
 			}
 			if (inputs.size() > 7) {
 				Utils::Injector* injector = Utils::Injector::GetInstance();
-				//matlab::data::TypedArray<matlab::data::MATLABString> inArrayRef1 = std::move(inputs[7]);
-				//std::string modelLocation = std::string(inArrayRef1[0]);
-				//injector.LoadModel(modelLocation);
-				injector->LoadModel("C:\\Users\\klsteele\\source\\repos\\mssaprocessingpipeline\\MSSAProcessingPipeline\\models\\FCN_20E_20240614_120751.pt");
+				matlab::data::TypedArray<matlab::data::MATLABString> inArrayRef1 = std::move(inputs[7]);
+				std::string modelLocation = std::string(inArrayRef1[0]);
+				injector->LoadModel(modelLocation);
 			}
 
 			MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);

@@ -78,3 +78,5 @@ LoadSampleData.m
 .python-version
 /backups
 /MSSAProcessingPipeline/models
+examples/*
+docs/*.docx
