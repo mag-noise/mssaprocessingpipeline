@@ -41,9 +41,9 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 if(NOT DEFINED ENV{CMAKE_CUDA_COMPILER} AND NOT DEFINED CMAKE_CUDA_COMPILER)
-    project(MSSAProcessingPipeline VERSION 1.2.0 LANGUAGES CXX)
+    project(MSSAProcessingPipeline VERSION 1.2.1 LANGUAGES CXX)
 else()
-    project(MSSAProcessingPipeline VERSION 1.2.0 LANGUAGES CXX CUDA)
+    project(MSSAProcessingPipeline VERSION 1.2.1 LANGUAGES CXX CUDA)
 endif()
 message("${CMAKE_BUILD_TYPE}")
 
