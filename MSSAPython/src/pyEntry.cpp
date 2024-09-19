@@ -60,12 +60,35 @@ py::dict pyEntry(const py::dict &inputs) {
     py::array_t<double> inboard_input = inputs["inboard_input"].cast<py::array_t<double>>().attr("flatten")();;
     py::array_t<double> outboard_input = inputs["outboard_input"].cast<py::array_t<double>>().attr("flatten")();;
     py::array_t<double> timestamp = inputs["timestamp"].cast<py::array_t<double>>().attr("flatten")();;
+	if (inputs.contains("model")) {
+		Utils::Injector* injector = Utils::Injector::GetInstance();
+		std::string modelLocation = inputs["model"].cast<std::string>();
+		injector->LoadModel(modelLocation);
+	}
 
 	// Access other values from the dictionary
-	unsigned int dimensions = inputs["dimensions"].cast<unsigned int>();
-	double alpha_threshold = inputs["alpha_threshold"].cast<double>();
-	int segment_size = inputs["segment_size"].cast<int>();
-	int window_size = inputs["window_size"].cast<int>();
+	unsigned int dimensions = 3;
+	if (inputs.contains("dimensions")) {
+		dimensions = inputs["dimensions"].cast<unsigned int>();
+	}
+	double alpha_threshold = 0.05;
+	if (inputs.contains("alpha_threshold")) {
+		alpha_threshold = inputs["alpha_threshold"].cast<double>();
+	}
+	int segment_size = outboard_input.size();
+	if (inputs.contains("segment_size")) {
+		segment_size = inputs["segment_size"].cast<int>();
+	}
+	
+	int window_size = 10;
+	if (inputs.contains("window_size")) {
+		window_size = inputs["window_size"].cast<int>();
+	}
+
+	if (segment_size < 2 * window_size) {
+		throw std::invalid_argument("Segment Size must be at least 2x Window Size");
+	}
+
 	Processor::MSSA::DynamicVariableSetup(segment_size, window_size);
 
 	MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);

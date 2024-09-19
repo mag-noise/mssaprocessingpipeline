@@ -4,7 +4,7 @@
 # Pre-Compiled Binary Usage
 ## Installation
 The MEX File is available for use as a pre-compiled function. This can be found at the [releases page](https://research-git.uiowa.edu/space-physics/epop/mssaprocessingpipeline/-/releases) for download, or in the releases folder when cloning. 
-## Usage
+## Usage (Matlab)
 To use, unpack the **mssa.7z** file and include the unpack location in your matlab instance. For example, if unpacking the contents to a folder called "MSSA" use the following commands in Matlab:
 
 ```Matlab
@@ -37,6 +37,33 @@ Function outputs are ordered as follows:
 		f. Wheel Error: value has not had the wheel removed. Affects all values of a segment
 4. wheel_inboard: Wheel of inboard signal
 5. wheel_outboard: Wheel of outboard signal
+
+## Usage (Python)
+
+```Python
+# Simple as import and use
+import MSSAPython as mp
+output_dictionary = mp.pyEntry({dictionary containing data})
+```
+
+Very Similar to Matlab, but a couple of small tweak.
+
+Input: Python Dictionary containing the following values
+1. inboard_input: 3D magnetic field data in 3xN double value format
+2. outboard_input: 3D magnetic field data in 3xN double value format
+3. timestamp: 1D matrix of datetime values representing the time the magnetic field data record was recorded
+4. dimensions: N in the NxM matrix provided to MSSAMex. Default to 3
+5. alpha_threshold: Value between [0, 1] used to select components for reconstruction. Defaults to 0.05
+6. segment_size: Size of the N magnetic field data points to use as for each analysis cycle. If the segment_size < N, the magnetic field data is broken up into N/segment_size-1 segments (exludes last segment). Defaults to 5000
+7. window_size: Size of the window used by MSSA when deconstructing signal. Defaults to 40
+8. model: Full file path string to the location of the PyTorch Model to use (if available)
+
+Output: Python Dictionary containing the following values
+1. inboard_output: 3D magnetic field data in 3xN double value format
+2. outboard_output: 3D magnetic field data in 3xN double value format
+3. inboard_wheel: 3D magnetic field data in 3xN double value format
+4. outboard_wheel: 3D magnetic field data in 3xN double value format
+5. flags: 1D matrix of integer values with bitflags representing the different failures.
 
 # Compilation Setup
 ## Requirements (Windows & Linux)
