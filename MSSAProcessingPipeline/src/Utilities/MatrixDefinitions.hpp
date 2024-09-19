@@ -20,9 +20,9 @@ namespace Utils{
 	class FlagSystem
 	{
     public:
-        enum flagtype {
+        typedef enum {
             seg_start, merge, skipped, t_jump, nan, flipped_signal, small_section, wheel_error
-        };
+        } flagtype;
 
         /// <summary>
         /// Inner structure to capture what flags can be raised and how to handle them
@@ -134,20 +134,22 @@ namespace Utils{
                 instance->flags[i].time_jump |= (timeseries[i]) > mean;
         }
         
+
         /// <summary>
         /// Function to flag a segment as skipped
         /// </summary>
         /// <param name="start"></param>
         /// <param name="segment_size"></param>
-        void FlagSegment(int start, int segment_size, flagtype[] addition_flags = []) {
+        void FlagSegment(int start, int segment_size, std::vector<flagtype>* additional_flags = nullptr) {
+
             if (start + segment_size < Size())
                 throw std::invalid_argument("Invalid segment constraints. Unable to flag the full requested segment.");
-            std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [](flag& val) {
+            std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [additional_flags](flag& val) {
                 val.skipped_value |= 1; 
-                if (std::find(additional_flags.begin(), additional_flags.end(), flagtype::nan) != additional_flags.end()) {
+                if (std::find(additional_flags->begin(), additional_flags->end(), flagtype::nan) != additional_flags->end()) {
                     val.is_nan |= 1;
                 }
-                if (std::find(additional_flags.begin(), additional_flags.end(), flagtype::small_section) != additional_flags.end()) {
+                if (std::find(additional_flags->begin(), additional_flags->end(), flagtype::small_section) != additional_flags->end()) {
                     val.segment_too_small |= 1;
                 }
 

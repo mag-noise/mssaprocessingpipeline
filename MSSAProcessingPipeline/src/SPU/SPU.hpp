@@ -534,7 +534,8 @@ namespace SignalProcessingUnit{
 			for(int idx = 0; idx < inboard.size(); idx++){
 				try {
 					if (!(inboard[vec][idx].size() >= 2 * MSSA::WindowSize())) {
-						Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions(), MSSA::InputSize() * inboard.GetDimensions(), [Utils::FlagSystem::flagtype::small_section]);
+						std::vector<FlagSystem::flagtype>v = { FlagSystem::flagtype::small_section };
+						Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions(), MSSA::InputSize() * inboard.GetDimensions(), &v);
 						break;
 					}
 

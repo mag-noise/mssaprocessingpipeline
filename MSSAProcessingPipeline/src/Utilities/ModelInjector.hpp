@@ -119,10 +119,10 @@ namespace Utils {
 		/// <param name="inboard"></param>
 		/// <param name="outboard"></param>
 		/// <returns></returns>
-		std::vector<int> ApplyModel(MSSA::ReconstructionMatrix input, MSSA::ValidSignal inboard, MSSA::ValidSignal outboard, double alpha) {
-			Eigen::Map<Eigen::MatrixXd> x(inboard.data(), 1, InputSize());
-			Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, InputSize());
-			MatrixXd interference = x - y;
+		std::vector<int> ApplyModel(MSSA::ReconstructionMatrix recon, MSSA::ValidSignal inboard, MSSA::ValidSignal outboard, double alpha) {
+			Eigen::Map<Eigen::MatrixXd> x(inboard.data(), 1, MSSA::InputSize());
+			Eigen::Map<Eigen::MatrixXd> y(outboard.data(), 1, MSSA::InputSize());
+			Eigen::MatrixXd interference = x - y;
 
 			std::vector<int> indexList = std::vector<int>();
 			std::vector<double> listOfCheckValues = std::vector<double>();
@@ -139,8 +139,6 @@ namespace Utils {
 						indexList.push_back(i);
 					}
 					listOfCheckValues.push_back(check);
-					//listOfCheckValuesX.push_back(checkX);
-					//listOfCheckValuesY.push_back(checkY);
 				}
 				catch (std::exception const& ex) {
 					std::string error_message = "";
@@ -151,7 +149,6 @@ namespace Utils {
 				}
 
 			}
-			//indexList = { 0, 1, 40, 41 };
 			return indexList;
 
 		}
