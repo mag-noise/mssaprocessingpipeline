@@ -63,7 +63,6 @@ namespace Processor{
             int static RemainingValues();
             ReconstructionMatrix static Process(ValidSignal &inboard_signal, ValidSignal &outboard_signal);
             double static CorrelationCoefficient(Eigen::MatrixXd x, Eigen::MatrixXd y);
-            std::vector<int> static ComponentSelection(ReconstructionMatrix recon, ValidSignal inboard, ValidSignal outboard, double alpha);
             
 
     };

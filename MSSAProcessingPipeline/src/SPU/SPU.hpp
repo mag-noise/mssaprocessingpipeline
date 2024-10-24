@@ -12,17 +12,19 @@
 #include "../MSSA/MSSA.hpp"
 #include "../Utilities/MatrixDefinitions.hpp"
 #include "../Utilities/Gradients.hpp"
+#include "../Utilities/ModelInjector.hpp"
 #ifdef _MAT_
 #include "MatlabEngine.hpp"
 #include "MatlabDataArray.hpp"
 #endif // !_MAT_
+
 
 // Using SPU instanciates flagsystem instance linking
 
 // TODO: Add functionality for parallelism
 namespace SignalProcessingUnit{
 	using namespace std;
-
+	using namespace Utils;
 	/// <summary>
 	/// Instance class to contain and represent a signal as well as its processing.
 	/// </summary>
@@ -525,11 +527,18 @@ namespace SignalProcessingUnit{
 
 		if (inboard.GetDimensions() != outboard.GetDimensions())
 			return;
-
+		
+		Utils::Injector* injector = Utils::Injector::GetInstance();
 		// TODO: Make work for both XYZ and non-XYZ
 		for (char vec = 'a'; vec < 'a' + inboard.GetDimensions(); vec++) {
 			for(int idx = 0; idx < inboard.size(); idx++){
 				try {
+					if (!(inboard[vec][idx].size() >= 2 * MSSA::WindowSize())) {
+						std::vector<FlagSystem::flagtype>v = { FlagSystem::flagtype::small_section };
+						Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions(), MSSA::InputSize() * inboard.GetDimensions(), &v);
+						break;
+					}
+
 					MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
 
 	#ifdef _TEST
@@ -546,44 +555,16 @@ namespace SignalProcessingUnit{
 					}
 					MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
 	#endif
-					auto componentList = MSSA::ComponentSelection(mat, inboard[vec][idx], outboard[vec][idx], alpha[(vec % 'a')%alpha.size()]);
+					auto componentList = injector->ApplyModel(mat, inboard[vec][idx], outboard[vec][idx], alpha[(vec % 'a')%alpha.size()]);
 					inboard.BuildSignal(mat, componentList, vec, idx);
 					outboard.BuildSignal(mat, componentList, vec, idx);
 	#ifdef _TEST
-					//MSSA::ValidSignal inboardRecon = inboard[vec][idx];
-					//MSSA::ValidSignal outboardRecon = outboard[vec][idx];
 
-					//std::cout << "Mat " << idx << " size: " << mat.size() << std::endl;
-					//std::cout << "N rows: " << mat.rows() << std::endl;
-					//std::cout << "Row 1: " << mat.row(0) << std::endl;
-					//std::cout << "N cols: " << mat.cols() << std::endl;
-
-
-
-					//std::cout << "Original Signal: ";
-					//for_each(inboardOriginal.begin(), inboardOriginal.end(), [](double a) {std::cout << a << ", "; });
-					//std::cout << std::endl;
-
-					//std::cout << "Reconstructed Signal: ";
-					//for_each(inboardRecon.begin(), inboardRecon.end(), [](double a) {std::cout << a << ", "; });
-					//std::cout << std::endl;
 					break;
 	#endif // _DEBUG
 				}
 				catch(std::exception const& ex) {
-					Utils::FlagSystem::GetInstance()->FlagSegment(idx, MSSA::InputSize() * inboard.GetDimensions());
-
-					//std::string error_message = "";
-					//error_message.append(ex.what());
-					//error_message.append("\nError happened at component \"");
-					//error_message.push_back(vec);
-					//error_message.append("\" between C++ indices ");
-					//std::pair<int, int> indices = inboard.SegmentIndices(idx);
-					//error_message.append(std::to_string(indices.first));
-					//error_message.append(" and ");
-					//error_message.append(std::to_string(indices.second));
-
-					//throw std::exception(error_message.c_str());
+					Utils::FlagSystem::GetInstance()->FlagSegment(idx * MSSA::InputSize() * inboard.GetDimensions() * inboard.GetDimensions(), MSSA::InputSize());
 				}
 			}
 		}

@@ -14,20 +14,22 @@
 namespace Utils{
 	/// <summary>
 	/// Singleton class to maintain flags across signals
+    /// NOTE FOR ALL FURTURE SINGLETONS: They must be defined inside any files generating a library or executable.
+	/// -> Example in mexEntry.cpp
 	/// </summary>
 	class FlagSystem
 	{
     public:
-        enum flagtype {
-            seg_start, merge, skipped, t_jump, nan, flipped_signal, wheel_error
-        };
+        typedef enum {
+            seg_start, merge, skipped, t_jump, nan, flipped_signal, small_section, wheel_error
+        } flagtype;
 
         /// <summary>
         /// Inner structure to capture what flags can be raised and how to handle them
         /// </summary>
         struct flag {
         public:
-            uint8_t  is_nan : 1, time_jump:1, skipped_value:1, merge_required:1, time_jump_used:1, start_of_segment:1, flipped:1, failed_wheel:1;
+            uint16_t segment_too_small : 1, is_nan: 1, time_jump : 1, skipped_value : 1, merge_required : 1, time_jump_used : 1, start_of_segment : 1, flipped : 1, failed_wheel : 1;
 
             const bool FlagRaised() {
                 return (bool)(is_nan || (time_jump&&!time_jump_used) || skipped_value);
@@ -38,11 +40,13 @@ namespace Utils{
             }
             
             // Current makeup of flags:
-            // 0 0 Wheel_error NaN T_Jump Skipped Merge Seg_start 
+            // Wheel_error Too_Small_Segment Flipped_Signal NaN T_Jump Skipped Merge Seg_start 
             // POTENTIAL EXTENSIONS: Inf values | Eigenvector unable to be calculated
-            operator int() const { return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | 
-                                    (merge_required << merge)) | (start_of_segment << seg_start) | (flipped << flipped_signal) | 
-                                    (failed_wheel << wheel_error); }
+            operator int() const { 
+                return(uint8_t)((is_nan << nan) | (time_jump << t_jump) | (skipped_value << skipped) | 
+                                    (merge_required << merge) | (start_of_segment << seg_start) | (flipped << flipped_signal) | 
+                                    (failed_wheel << wheel_error) | (segment_too_small << small_section)); 
+            }
 
             friend bool operator<(flag& lhs, flag& rhs) { 
                 return !lhs.FlagRaised() && rhs.FlagRaised();
@@ -130,18 +134,29 @@ namespace Utils{
                 instance->flags[i].time_jump |= (timeseries[i]) > mean;
         }
         
+
         /// <summary>
         /// Function to flag a segment as skipped
         /// </summary>
         /// <param name="start"></param>
         /// <param name="segment_size"></param>
-        void FlagSegment(int start, int segment_size) {
+        void FlagSegment(int start, int segment_size, std::vector<flagtype>* additional_flags = nullptr) {
+
             if (start + segment_size < Size())
                 throw std::invalid_argument("Invalid segment constraints. Unable to flag the full requested segment.");
-            std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [](flag& val) {
+            std::for_each(instance->flags.begin() + start, instance->flags.begin() + start + segment_size, [additional_flags](flag& val) {
                 val.skipped_value |= 1; 
-                });
+                if (std::find(additional_flags->begin(), additional_flags->end(), flagtype::nan) != additional_flags->end()) {
+                    val.is_nan |= 1;
+                }
+                if (std::find(additional_flags->begin(), additional_flags->end(), flagtype::small_section) != additional_flags->end()) {
+                    val.segment_too_small |= 1;
+                }
+
+            });
         }
+        //seg_start, merge, skipped, t_jump, nan, flipped_signal, small_section, wheel_error
+
 
         /// <summary>
         /// Function to flag the segment start

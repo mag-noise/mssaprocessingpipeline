@@ -1,6 +1,6 @@
 {
   "name": "mssaprocessingpipeline",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "C++ library to process and remove interference from signals. Includes Matlab scripts to generate MEX function",
   "dependencies": [
     {
@@ -14,7 +14,16 @@
     {
       "name": "pybind11",
       "platform": "windows | linux"
+    },
+    {
+      "name": "libtorch",
+      "platform": "windows | linux"
+    },
+    {
+      "name": "mimalloc",
+      "platform": "windows | linux"
     }
-  ]
+  ],
+  "$local_change": "In libtorch's vcpkg.json (located in portfiles), removed CUDA feature to not use FindCUDA. Requirement for cmake 3.27+"
 
 }

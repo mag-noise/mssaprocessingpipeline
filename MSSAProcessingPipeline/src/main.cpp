@@ -1,5 +1,6 @@
 #include "MSSA/MSSA.hpp"
 #include "SPU/SPU.hpp"
+#include "Utilities/ModelInjector.hpp"
 #include <Eigen/Dense>
 #include <iostream>
 #include <fstream>
@@ -11,6 +12,7 @@ int main(int argc, char* argv[]) {
     using Eigen::MatrixXd;
     using namespace Processor;
     using SignalProcessingUnit::MSSAProcessingUnit;
+    using namespace Utils;
 
     //MSSAProcessingUnit<double, vector<double>> spu1{};
 
