@@ -10,6 +10,22 @@
 #include <iterator>
 #include <vector>
 #include <cstdarg>
+
+/*
+Author: Kevin Steele, Alex Hoffmann
+Last Update : 10 / 24 / 2024
+
+General Parameters
+----------
+uf : window size for uniform filter used to detrend the data
+detrend : boolean for whether to detrend the data
+
+Algorithm Parameters
+----------
+fs : sampling frequency
+dj : wavelet scale spacing
+scales : scales used in the wavelet transform(set by the algorithm)
+*/
 namespace Processor {
     using namespace std;
     using Eigen::MatrixXd;
@@ -29,22 +45,26 @@ namespace Processor {
         float f_dj;           // Wavelet Scale Spacing
         float f_scales;       // Scales used in the wavelet transform
         float f_lowest_freq;  // Lowest frequency in the wavelet transform
-        float f_boom;         // Trend to use during retrending process
+        unsigned int f_boom;         // Trend to use during retrending process
 
     public:
 
-        WAICUP(unsigned int uf = 400, bool detrend=true, unsigned int fs=1, float dj=1/12, float scales=0, float lowest_freq=0, float boom=0)
+        WAICUP(unsigned int uf = 400, bool detrend=true, unsigned int fs=1, float dj=1/12, float scales=0, float lowest_freq=0, unsigned int boom=-1)
             : ui_uf(uf), b_detrend(detrend), ui_fs(fs), f_dj(dj), f_scales(scales), f_lowest_freq(lowest_freq), f_boom(boom)
         {}
 
 
-        int Clean(MatrixXd B_field, bool triaxial);
+        /*
+            B : magnetic field measurements from the sensor array(n_sensors, axes, n_samples)
+            triaxial : boolean for whether to use triaxial or uniaxial ICA
+        */
+        MatrixXd Clean(std::vector<MatrixXd> B_field, bool triaxial);
 
-        int CleanWAICUP(MatrixXd sensors);
+        Eigen::VectorXd CleanWAICUP(MatrixXd sensors);
 
-        int Dual(MatrixXd signal, MatrixXd dt, MatrixXd dj);
+        Eigen::VectorXd Dual(MatrixXd signal, float dt, float dj);
 
-        int Multi(MatrixXd signal, MatrixXd dt, MatrixXd dj)
+        Eigen::VectorXd Multi(MatrixXd signal, float dt, float dj);
 
     };
 }
