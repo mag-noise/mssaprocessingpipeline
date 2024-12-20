@@ -49,7 +49,10 @@ else()
 endif()
 message("${CMAKE_BUILD_TYPE}")
 
-file(GLOB_RECURSE file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.cpp ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.hpp)
+file(GLOB_RECURSE file_search   ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.cpp 
+                                ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/*.hpp  
+                                ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/include/c_interface.h
+)
 
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/mexEntry.cpp)
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/pyEntry.cpp)
