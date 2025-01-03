@@ -58,4 +58,10 @@ if(test)
 	#add_test(NAME ReadMatfile COMMAND ${PROJECT_NAME})
 	#add_test(NAME MatFileProcessing COMMAND ${PROJECT_NAME})
 
+	project(cTester)
+	add_executable(cTester EntryTest.c ${PROJECT_PARENT}/include/c_interface.h)
+	#include_directories( ${PROJECT_PARENT}/include)
+	target_include_directories(cTester PRIVATE ${PROJECT_PARENT}/include)
+	target_link_libraries(cTester PRIVATE MSSAProcessingPipeline)
+
 endif()

@@ -1,4 +1,5 @@
-﻿#include "MSSA/MSSA.hpp"
+﻿#include "../include/c_interface.h"
+#include "MSSA/MSSA.hpp"
 #include "SPU/SPU.hpp"
 #include <iostream>
 #include <fstream>
@@ -8,15 +9,17 @@
 #include <iterator> // for back_inserter�
 
 Utils::FlagSystem* Utils::FlagSystem::instance;
+Utils::Injector* Utils::Injector::instance;
 
 /// <summary>
 /// Entry function for the library. Meant to be exposed and utilized by any program that has access to C++ libraries.
 /// Will need an extern "C" wrapper in order to transfer out, or a complete wrapper like MSSAPython or mexEntry
 /// </summary>
 void process(double* inboardInput, double* outboardInput, long* timenum, unsigned int size, 
+    double* inboardOutput, double* outboardOutput,
+    double* inboardWheel, double* outboardWheel, int* flags,
     unsigned int dimensions = 3, unsigned int inputSize = 0, unsigned int windowSize = 0,
-    double alpha=0.05, double* inboardOutput, double* outboardOutput, 
-    double* inboardWheel, double* outboardWheel, int* flags) {
+    double alpha=0.05) {
     using SignalProcessingUnit::MSSAProcessingUnit;
 
     // These values basically tell the program how to interpret the input arrays.
@@ -79,4 +82,21 @@ void process(double* inboardInput, double* outboardInput, long* timenum, unsigne
     inboard.CheckSignalDifference(signal, wheel, dest);
     outboard.CheckSignalDifference(signal2, temp, dest2);
 
+}
+
+
+extern "C"{
+
+    void process_c(double* inboardInput, double* outboardInput, long* timenum, unsigned int size,
+        unsigned int dimensions, unsigned int inputSize, unsigned int windowSize,
+        double alpha, double* inboardOutput, double* outboardOutput,
+        double* inboardWheel, double* outboardWheel, int* flags) {
+
+
+        process(inboardInput, outboardInput, timenum, size,
+            inboardOutput, outboardOutput,
+            inboardWheel, outboardWheel, flags,
+            dimensions, inputSize, windowSize, alpha);
+        return;
+    }
 }

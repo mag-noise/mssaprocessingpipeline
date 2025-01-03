@@ -57,6 +57,10 @@ file(GLOB_RECURSE file_search   ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/mexEntry.cpp)
 list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/pyEntry.cpp)
 
+# TODO: temporarily remove until ready for compilation and linking
+list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/WAICUP/WAICUP.cpp)
+list(REMOVE_ITEM file_search ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/src/WAICUP/WAICUP.hpp)
+
 
 message("Prefix: ${CMAKE_PREFIX_PATH}")
 if(DEFINED ENV{EIGEN3_INCLUDE_DIR})
