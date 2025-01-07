@@ -135,6 +135,7 @@ endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     message("Debug Mode")	
+    add_compile_definitions(_DEBUG)
     enable_testing()
     add_subdirectory(MSSAProcessingPipeline/tests)
 endif()

@@ -14,6 +14,9 @@ Utils::Injector* Utils::Injector::instance;
 /// <summary>
 /// Entry function for the library. Meant to be exposed and utilized by any program that has access to C++ libraries.
 /// Will need an extern "C" wrapper in order to transfer out, or a complete wrapper like MSSAPython or mexEntry
+/// Input array must be organized as the following: Assuming a 4 dimensional input, [a, b, c, d, a, b, c, d, ... ]
+/// 'size' parameter == number of points in timenum == number of points in 1 dimension of an input array
+/// Input array must be a rectangular array (i.e. all dimensions are the same size)
 /// </summary>
 void process(double* inboardInput, double* outboardInput, long* timenum, unsigned int size, 
     double* inboardOutput, double* outboardOutput,
@@ -32,6 +35,10 @@ void process(double* inboardInput, double* outboardInput, long* timenum, unsigne
     if (windowSize > 0 && inputSize > 0)
     {
         Processor::MSSA::DynamicVariableSetup(/*Input Size*/inputSize, /*Window Size*/windowSize);
+    }
+    else {
+        Processor::MSSA::DynamicVariableSetup(/*Input Size*/size, /*Window Size*/10);
+
     }
 
     MSSAProcessingUnit<double> inboard = MSSAProcessingUnit<double>(true, dimensions);
@@ -53,6 +60,7 @@ void process(double* inboardInput, double* outboardInput, long* timenum, unsigne
     outboard.PreProcess(dest2, true);
 
     std::vector<double> alpha_val = { alpha, alpha, alpha };
+
     
     MSSAProcessingUnit<double>::Process(inboard, outboard, alpha_val);
 
@@ -72,6 +80,7 @@ void process(double* inboardInput, double* outboardInput, long* timenum, unsigne
 
     // Saving signals to output pointers. Unsure if this will be be reference or by value when moving from signal variable to output
     auto signal = inboard.JoinSignal(dest);
+
     auto signal2 = outboard.JoinSignal(dest2);
     std::vector<int> temp2 = Utils::FlagSystem::GetInstance()->Snapshot();
     for (int i = 0; i < size; i++) {

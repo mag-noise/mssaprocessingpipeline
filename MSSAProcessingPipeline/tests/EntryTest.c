@@ -48,11 +48,16 @@ void FreeField(MagneticField* mf) {
     free(mf->z);
 }
 
-void LoadData(double* boardField, char* fileName) {
+int Indexer(int a, int j) {
+    return a * 3 + j;
+}
+
+void LoadData(double* boardField, char* fileName, int overrideValue) {
     int count = 0;
     FILE* myFile = fopen(fileName, "r");
     // Get Inboard X
     char buffer[BUFFER_SIZE];
+
 
     while (fgets(buffer, BUFFER_SIZE, myFile) && count < MAX_SIZE) {
         // If you need all the values in a row
@@ -61,7 +66,30 @@ void LoadData(double* boardField, char* fileName) {
             //printf("%s\n", commaToken);
             // Just printing each integer here but handle as needed
             double n = atof(commaToken);
-            boardField[count] = n;
+            boardField[count+ overrideValue] = n;
+            commaToken = strtok(NULL, ",");
+            count++;
+        }
+    }
+    fclose(myFile);
+
+}
+
+void LoadDataIndexer(double* boardField, char* fileName, int overrideValue) {
+    int count = 0;
+    FILE* myFile = fopen(fileName, "r");
+    // Get Inboard X
+    char buffer[BUFFER_SIZE];
+
+
+    while (fgets(buffer, BUFFER_SIZE, myFile) && count < MAX_SIZE) {
+        // If you need all the values in a row
+        char* commaToken = strtok(buffer, ",");
+        while (commaToken && count < MAX_SIZE) {
+            //printf("%s\n", commaToken);
+            // Just printing each integer here but handle as needed
+            double n = atof(commaToken);
+            boardField[Indexer(count, overrideValue)] = n;
             commaToken = strtok(NULL, ",");
             count++;
         }
@@ -99,19 +127,14 @@ int main() {
     int window = 10;
 
     const int maxValue = MAX_SIZE;
-    MagneticField inboard = CreateField(maxValue);
-    MagneticField outboard = CreateField(maxValue);
+    //MagneticField inboard = CreateField(maxValue);
+    //MagneticField outboard = CreateField(maxValue);
     MagneticField inboard_out = CreateField(maxValue);
     MagneticField outboard_out = CreateField(maxValue);
     long* t_fit = (long*)malloc(maxValue * sizeof(long));
     
     // Grabbing input data
-    LoadData(inboard.x, "data\\inboard_x.csv");
-    LoadData(inboard.y, "data\\inboard_y.csv");
-    LoadData(inboard.z, "data\\inboard_z.csv");
-    LoadData(outboard.x, "data\\outboard_x.csv");
-    LoadData(outboard.y, "data\\outboard_y.csv");
-    LoadData(outboard.z, "data\\outboard_z.csv");
+
 
     LoadDataLong(t_fit, "data\\t_fit.csv");
 
@@ -123,41 +146,49 @@ int main() {
     double* outboard_wheel = (double*)malloc(maxValue*3 * sizeof(double));
     int* flags = (int*)malloc(maxValue*3 * sizeof(int));
 
+    LoadDataIndexer(inboard_full, "data\\inboard_x.csv", 0);
+    LoadDataIndexer(inboard_full, "data\\inboard_y.csv", 1);
+    LoadDataIndexer(inboard_full, "data\\inboard_z.csv", 2);
+    LoadDataIndexer(outboard_full, "data\\outboard_x.csv", 0);
+    LoadDataIndexer(outboard_full, "data\\outboard_y.csv", 1);
+    LoadDataIndexer(outboard_full, "data\\outboard_z.csv", 2);
+
 
     // Put all of the data into the new location
-    for (int i = 0; i < maxValue; i++) {
-        inboard_full[i] = inboard.x[i];
-        inboard_full[i + maxValue] = inboard.y[i];
-        inboard_full[i + (maxValue * 2)] = inboard.z[i];
-        // We do it
-        outboard_full[i] = outboard.x[i];
-        outboard_full[i + maxValue] = outboard.y[i];
-        outboard_full[i + (maxValue * 2)] = outboard.z[i];
-    }
+    //for (int i = 0; i < maxValue; i++) {
+    //    inboard_full[i] = inboard.x[i];
+    //    inboard_full[i + maxValue] = inboard.y[i];
+    //    inboard_full[i + (maxValue * 2)] = inboard.z[i];
+    //    // We do it
+    //    outboard_full[i] = outboard.x[i];
+    //    outboard_full[i + maxValue] = outboard.y[i];
+    //    outboard_full[i + (maxValue * 2)] = outboard.z[i];
+    //}
 
 
     // Run the function
-    process_c(inboard_full, outboard_full, t_fit, maxValue, 3, maxValue*3, 10, 0.05, inboard_result, outboard_result,  inboard_wheel, outboard_wheel, flags);
+    process_c(inboard_full, outboard_full, t_fit, maxValue, 3, maxValue, 10, 0.05, inboard_result, outboard_result,  inboard_wheel, outboard_wheel, flags);
 
     // Grabbing results for assertions
-    LoadData(inboard_out.x, "data\\inboard_x_output.csv");
-    LoadData(inboard_out.y, "data\\inboard_y_output.csv");
-    LoadData(inboard_out.z, "data\\inboard_z_output.csv");
-    LoadData(outboard_out.x, "data\\outboard_x_output.csv");
-    LoadData(outboard_out.y, "data\\outboard_y_output.csv");
-    LoadData(outboard_out.z, "data\\outboard_z_output.csv");
+    LoadData(inboard_out.x, "data\\inboard_x_output.csv", 0);
+    LoadData(inboard_out.y, "data\\inboard_y_output.csv", 0);
+    LoadData(inboard_out.z, "data\\inboard_z_output.csv", 0);
+    LoadData(outboard_out.x, "data\\outboard_x_output.csv", 0);
+    LoadData(outboard_out.y, "data\\outboard_y_output.csv", 0);
+    LoadData(outboard_out.z, "data\\outboard_z_output.csv", 0);
     
-    printf("inboard values at point 10: [%f,%f,%f]\n", inboard.x[10], inboard.y[10], inboard.z[10]);
-    printf("outboard value at point 10: [%f,%f,%f]\n", outboard.x[10], outboard.y[10], outboard.z[10]);
-    printf("inboard results at point 10: [%f,%f,%f]\n", inboard_result[10], inboard_result[10+maxValue], inboard_result[10+2*maxValue]);
-    printf("outboard results at point 10: [%f,%f,%f]\n", outboard_result[10], outboard_result[10 + maxValue], outboard_result[10 + 2 * maxValue]);
-    printf("inboard results at point 10: [%f,%f,%f]\n", inboard_out.x[10], inboard_out.y[10], inboard_out.z[10]);
-    printf("outboard results at point 10: [%f,%f,%f]\n", outboard_out.x[10], outboard_out.y[10], outboard_out.z[10]);
+    printf("inboard values at point 10: [%f,%f,%f]\n", inboard_full[Indexer(10, 0)], inboard_full[Indexer(10, 1)], inboard_full[Indexer(10, 2)]);
+    printf("outboard value at point 10: [%f,%f,%f]\n", outboard_full[Indexer(10, 0)], outboard_full[Indexer(10, 1)], outboard_full[Indexer(10, 2)]);
+    printf("inboard results at point 10: [%f,%f,%f]\n", inboard_result[Indexer(10, 0)], inboard_result[Indexer(10, 1)], inboard_result[Indexer(10, 2)]);
+    printf("outboard results at point 10: [%f,%f,%f]\n", outboard_result[Indexer(10, 0)], outboard_result[Indexer(10, 1)], outboard_result[Indexer(10, 2)]);
+    printf("inboard results file at point 10: [%f,%f,%f]\n", inboard_out.x[10], inboard_out.y[10], inboard_out.z[10]);
+    printf("outboard results file at point 10: [%f,%f,%f]\n", outboard_out.x[10], outboard_out.y[10], outboard_out.z[10]);
     printf("t_fit at point 10: [%d]\n", t_fit[10]);
+    printf("flag results at point 10: [%d]\n",flags[10]);
     
+    
+
     // Release
-    FreeField(&outboard);
-    FreeField(&inboard);
     free(t_fit);
     free(inboard_full);
     free(outboard_full);

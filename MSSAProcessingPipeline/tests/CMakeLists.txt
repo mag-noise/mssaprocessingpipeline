@@ -18,6 +18,10 @@ if(test)
 	list(REMOVE_ITEM file_search ${PROJECT_PARENT}/src/main.cpp ${PROJECT_PARENT}/src/mexEntry.cpp)
 	file(GLOB_RECURSE test_search ${PROJECT_SOURCE_DIR}/*.cpp ${PROJECT_SOURCE_DIR}/*.hpp)
 	#list(REMOVE_ITEM test_search ${PROJECT_SOURCE_DIR}/TestInjector.cpp)
+	# TODO: temporarily remove until ready for compilation and linking
+	list(REMOVE_ITEM file_search  ${PROJECT_PARENT}/src/WAICUP/WAICUP.cpp)
+	list(REMOVE_ITEM file_search  ${PROJECT_PARENT}/src/WAICUP/WAICUP.hpp)
+
 	add_executable(${PROJECT_NAME} ${file_search} ${test_search})
 	find_package(GTest REQUIRED)
 	find_package(Eigen3 REQUIRED NO_MODULE)
@@ -63,5 +67,9 @@ if(test)
 	#include_directories( ${PROJECT_PARENT}/include)
 	target_include_directories(cTester PRIVATE ${PROJECT_PARENT}/include)
 	target_link_libraries(cTester PRIVATE MSSAProcessingPipeline)
+	add_compile_definitions(_TEST)
+
+	add_custom_command(TARGET cTester PRE_BUILD COMMAND  ${CMAKE_COMMAND} -E copy_directory
+                       ${PROJECT_SOURCE_DIR}/data/ $<TARGET_FILE_DIR:cTester>/data/)
 
 endif()

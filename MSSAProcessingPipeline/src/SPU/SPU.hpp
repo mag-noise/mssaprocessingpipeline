@@ -542,18 +542,19 @@ namespace SignalProcessingUnit{
 					MSSA::ReconstructionMatrix mat = MSSA::Process(inboard[vec][idx], outboard[vec][idx]);
 
 	#ifdef _TEST
-					if (vec == 'x' && idx == 0) {
-						// TODO: Reconstruct original vectors
-						string path = "eigenvector.csv";
-						ofstream ofs(path);
+					//if (vec == 'x' && idx == 0) {
+					//	// TODO: Reconstruct original vectors
+					//	string path = "eigenvector.csv";
+					//	ofstream ofs(path);
 
-						// CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
-						using namespace Eigen;
-						IOFormat OctaveFmt(StreamPrecision, 0, ", ", "\n", "", "", "", "");
-						ofs << (mat).format(OctaveFmt);
-						ofs.close();
-					}
-					MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
+					//	// CSV Formatting example: https://stackoverflow.com/questions/61987600/write-eigen-vectorxd-in-csv-format
+					//	using namespace Eigen;
+					//	IOFormat OctaveFmt(StreamPrecision, 0, ", ", "\n", "", "", "", "");
+					//	ofs << (mat).format(OctaveFmt);
+					//	ofs.close();
+					//}
+					//MSSA::ValidSignal inboardOriginal = inboard[vec][idx];
+					
 	#endif
 					auto componentList = injector->ApplyModel(mat, inboard[vec][idx], outboard[vec][idx], alpha[(vec % 'a')%alpha.size()]);
 					inboard.BuildSignal(mat, componentList, vec, idx);
