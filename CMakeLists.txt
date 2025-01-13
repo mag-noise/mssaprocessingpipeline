@@ -86,6 +86,10 @@ endif(Torch_FOUND)
 
 # Generate Library based on what's allowed by packages found
 add_library(${PROJECT_NAME} STATIC ${file_search})
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD COMMAND  ${CMAKE_COMMAND} -E copy_directory
+                       ${PROJECT_SOURCE_DIR}/MSSAProcessingPipeline/include/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/include/)
+
+
 add_library(sub::mssaLib ALIAS ${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PRIVATE FILE_LOCATION=1)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)

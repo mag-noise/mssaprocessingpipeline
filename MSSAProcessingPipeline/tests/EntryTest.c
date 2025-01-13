@@ -154,20 +154,8 @@ int main() {
     LoadDataIndexer(outboard_full, "data\\outboard_z.csv", 2);
 
 
-    // Put all of the data into the new location
-    //for (int i = 0; i < maxValue; i++) {
-    //    inboard_full[i] = inboard.x[i];
-    //    inboard_full[i + maxValue] = inboard.y[i];
-    //    inboard_full[i + (maxValue * 2)] = inboard.z[i];
-    //    // We do it
-    //    outboard_full[i] = outboard.x[i];
-    //    outboard_full[i + maxValue] = outboard.y[i];
-    //    outboard_full[i + (maxValue * 2)] = outboard.z[i];
-    //}
-
-
     // Run the function
-    process_c(inboard_full, outboard_full, t_fit, maxValue, 3, maxValue, 10, 0.05, inboard_result, outboard_result,  inboard_wheel, outboard_wheel, flags);
+    process_c(inboard_full, outboard_full, t_fit, inboard_result, outboard_result, inboard_wheel, outboard_wheel, flags, maxValue, 3, maxValue, 10, 0.05);
 
     // Grabbing results for assertions
     LoadData(inboard_out.x, "data\\inboard_x_output.csv", 0);

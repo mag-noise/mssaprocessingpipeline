@@ -21,6 +21,10 @@
 )
 
 */
+int say_hi(int number);
 
-
-void process_c(double* inboardInput, double* outboardInput, long* timenum, unsigned int size, int dimensions, unsigned int inputSize, unsigned int windowSize, double alpha, double* inboardOutput, double* outboardOutput, double* inboardWheel, double* outboardWheel, int* flags);
+int process_c(double* inboardInput, double* outboardInput, long* timenum, unsigned int size,
+                double* inboardOutput, double* outboardOutput,
+                double* inboardWheel, double* outboardWheel, int* flags,
+                unsigned int dimensions, unsigned int inputSize, unsigned int windowSize,
+                double alpha);

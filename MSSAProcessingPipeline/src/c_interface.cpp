@@ -1,5 +1,4 @@
-﻿#include "../include/c_interface.h"
-#include "MSSA/MSSA.hpp"
+﻿#include "MSSA/MSSA.hpp"
 #include "SPU/SPU.hpp"
 #include <iostream>
 #include <fstream>
@@ -95,17 +94,25 @@ void process(double* inboardInput, double* outboardInput, long* timenum, unsigne
 
 
 extern "C"{
+    #include "../include/c_interface.h"
 
-    void process_c(double* inboardInput, double* outboardInput, long* timenum, unsigned int size,
+    int process_c(double* inboardInput, double* outboardInput, long* timenum, unsigned int size,
+        double* inboardOutput, double* outboardOutput,
+        double* inboardWheel, double* outboardWheel, int* flags,
         unsigned int dimensions, unsigned int inputSize, unsigned int windowSize,
-        double alpha, double* inboardOutput, double* outboardOutput,
-        double* inboardWheel, double* outboardWheel, int* flags) {
+        double alpha) {
 
+        if (alpha < 0) return -1;
 
         process(inboardInput, outboardInput, timenum, size,
             inboardOutput, outboardOutput,
             inboardWheel, outboardWheel, flags,
             dimensions, inputSize, windowSize, alpha);
-        return;
+        return 0;
+    }
+
+    int say_hi(int number) {
+        printf("Hello number %d. Adding 10 to you...", number);
+        return number + 10;
     }
 }
